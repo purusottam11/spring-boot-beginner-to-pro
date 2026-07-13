@@ -1,0 +1,2673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Boot — Core Components, Explained with Amazon, Instagram, YouTube &amp; WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F7F9;
+  --card:#FFFFFF;
+  --ink:#17222C;
+  --ink-soft:#4A5865;
+  --line:#DDE3EA;
+  --teal:#0E8A72;
+  --teal-soft:#E2F3EE;
+  --blue:#2E5AAC;
+  --blue-soft:#E8EEF9;
+  --danger:#D6482B;
+  --danger-soft:#FBEAE5;
+  --amber:#B97609;
+  --amber-soft:#FFF4DE;
+  --code-bg:#111A24;
+  --radius:14px;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --display:'Bricolage Grotesque','Inter',sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+}
+[data-theme="dark"]{
+  --paper:#0F1620;
+  --card:#17202B;
+  --ink:#E8EDF2;
+  --ink-soft:#9AABBB;
+  --line:#2A3644;
+  --teal:#2FBF9A;
+  --teal-soft:#15332B;
+  --blue:#7FA0E0;
+  --blue-soft:#1D2A42;
+  --danger:#E2694B;
+  --danger-soft:#3A2019;
+  --amber:#D99A2B;
+  --amber-soft:#332508;
+  --code-bg:#0A0F17;
+}
+[data-theme="dark"] .app-scenario.amazon{border-color:#4A3B12}
+[data-theme="dark"] .app-scenario.instagram{background:linear-gradient(135deg,#2A1D2E,#2E1B18);border-color:#3D2A38}
+[data-theme="dark"] .app-scenario.youtube{border-color:#4A2A20}
+[data-theme="dark"] .app-scenario.whatsapp{border-color:#1F4038}
+[data-theme="dark"] .hero::before{background:radial-gradient(circle,var(--teal-soft),transparent 70%)}
+[data-theme="dark"] pre[class*="language-"]{border:1px solid var(--line)}
+[data-theme="dark"] :not(pre)>code{color:var(--teal)}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);line-height:1.65;font-size:16px;transition:background-color .2s ease,color .2s ease}
+a{color:inherit}
+.layout{display:grid;grid-template-columns:280px 1fr;max-width:1240px;margin:0 auto;gap:32px;padding:0 20px}
+
+/* ---------- progress bar ---------- */
+#progress{position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--teal),var(--blue));z-index:200}
+
+/* ---------- sidebar ---------- */
+.sidebar{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:24px 4px 40px 0;scrollbar-width:thin}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;padding:0 8px}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--display);font-weight:800;font-size:16px;flex-shrink:0}
+.brand-text{font-family:var(--display);font-weight:700;font-size:15px;line-height:1.2;flex:1;min-width:0}
+.theme-toggle{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s}
+.theme-toggle:hover{background:var(--teal-soft);border-color:var(--teal)}
+.theme-toggle svg{width:17px;height:17px}
+.theme-toggle .icon-sun{stroke:var(--amber);display:none}
+.theme-toggle .icon-moon{stroke:var(--ink-soft);display:block}
+[data-theme="dark"] .theme-toggle .icon-sun{display:block}
+[data-theme="dark"] .theme-toggle .icon-moon{display:none}
+.brand-text span{display:block;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+
+.apps-legend{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px;margin-bottom:20px}
+.app-chip{font-size:11px;font-weight:600;padding:4px 9px;border-radius:20px;display:flex;align-items:center;gap:5px}
+.app-chip .dot{width:7px;height:7px;border-radius:50%}
+.app-chip.amazon{background:#FFF4DE;color:#8A5A00}
+.app-chip.amazon .dot{background:#E8A400}
+.app-chip.instagram{background:#FBEAE5;color:#A23A6B}
+.app-chip.instagram .dot{background:linear-gradient(135deg,#833AB4,#E1306C,#F77737)}
+.app-chip.youtube{background:#FBEAE5;color:#B01F1F}
+.app-chip.youtube .dot{background:#FF0000}
+.app-chip.whatsapp{background:var(--teal-soft);color:#0A6B57}
+.app-chip.whatsapp .dot{background:#25D366}
+
+.roadmap-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:11px;background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;font-family:var(--body);font-weight:600;font-size:13.5px;border:none;cursor:pointer;margin-bottom:20px;transition:opacity .15s,transform .15s}
+.roadmap-btn:hover{opacity:.92}
+.roadmap-btn:active{transform:scale(.98)}
+.roadmap-btn svg{width:15px;height:15px;stroke:#fff;flex-shrink:0}
+
+/* ---------- roadmap modal ---------- */
+.roadmap-overlay{position:fixed;inset:0;background:rgba(15,22,32,.6);backdrop-filter:blur(2px);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:48px 20px;overflow-y:auto}
+.roadmap-overlay.open{display:flex}
+.roadmap-modal{background:var(--card);border-radius:22px;max-width:920px;width:100%;padding:34px 38px 38px;position:relative;box-shadow:0 24px 70px rgba(0,0,0,.3);margin-bottom:48px}
+.roadmap-close{position:absolute;top:22px;right:22px;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.roadmap-close:hover{background:var(--danger-soft)}
+.roadmap-close svg{width:16px;height:16px;stroke:var(--ink-soft)}
+.roadmap-header{margin-bottom:26px;padding-right:40px}
+.roadmap-header .eyebrow{font-family:var(--mono);font-size:12px;color:var(--teal);font-weight:600;letter-spacing:.04em}
+.roadmap-header h2{font-family:var(--display);font-size:25px;font-weight:800;margin:6px 0 8px;line-height:1.2}
+.roadmap-header p{color:var(--ink-soft);font-size:14px;max-width:560px}
+
+.roadmap-tier{position:relative;padding:18px 0 18px 22px;border-left:3px solid var(--tier-color,var(--teal))}
+.roadmap-tier:not(:last-child){margin-bottom:4px}
+.roadmap-tier.basic{--tier-color:var(--teal)}
+.roadmap-tier.intermediate{--tier-color:var(--blue)}
+.roadmap-tier.advanced{--tier-color:var(--amber)}
+.roadmap-tier-label{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;color:var(--tier-color)}
+.roadmap-tier-label .tier-dot{width:9px;height:9px;border-radius:50%;background:var(--tier-color);flex-shrink:0}
+.roadmap-tier-label .tier-count{font-weight:500;color:var(--ink-soft);text-transform:none;letter-spacing:0}
+
+.roadmap-group{margin-bottom:14px}
+.roadmap-group:last-child{margin-bottom:0}
+.roadmap-group-title{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:8px}
+.roadmap-chips{display:flex;flex-wrap:wrap;gap:7px}
+.roadmap-chip{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:6px 12px 6px 8px;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s,color .15s}
+.roadmap-chip:hover{border-color:var(--tier-color,var(--teal));background:var(--teal-soft);color:var(--teal)}
+.roadmap-chip .chip-num{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:var(--tier-color,var(--teal));border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+@media (max-width:640px){
+  .roadmap-modal{padding:26px 20px 30px}
+  .roadmap-tier{padding-left:14px}
+}
+
+.toc-part{padding:0 8px;margin-top:16px;margin-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.toc-link{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink-soft);text-decoration:none;transition:background .15s,color .15s}
+.toc-link:hover{background:var(--teal-soft);color:var(--ink)}
+.toc-link.active{background:var(--teal-soft);color:var(--teal);font-weight:600}
+.toc-num{font-family:var(--mono);font-size:11px;color:var(--line);width:18px;flex-shrink:0}
+.toc-link.active .toc-num{color:var(--teal)}
+
+/* ---------- main content ---------- */
+main{padding:36px 0 100px;min-width:0}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:44px 40px;margin-bottom:36px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,var(--teal-soft),transparent 70%)}
+.hero-eyebrow{font-family:var(--mono);font-size:12.5px;color:var(--teal);font-weight:600;letter-spacing:.04em;margin-bottom:14px;display:block}
+.hero h1{font-family:var(--display);font-size:clamp(28px,4vw,40px);font-weight:800;line-height:1.15;margin-bottom:16px;max-width:640px}
+.hero p{color:var(--ink-soft);font-size:16px;max-width:600px;margin-bottom:22px}
+.hero-apps{display:flex;flex-wrap:wrap;gap:10px}
+.hero-app-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+
+.intro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px}
+.intro-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.intro-card h3{font-family:var(--display);font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.intro-card p{font-size:13.5px;color:var(--ink-soft)}
+.template-strip{display:flex;align-items:center;gap:0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:40px;flex-wrap:wrap}
+.template-step{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;padding:6px 4px}
+.template-step .n{width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-family:var(--mono);font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.template-arrow{color:var(--line);font-size:18px;margin:0 6px}
+
+/* ---------- chapter ---------- */
+.chapter{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:38px 40px;margin-bottom:26px;scroll-margin-top:20px}
+.chap-part-label{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.chap-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:18px}
+.chap-num{font-family:var(--display);font-size:30px;font-weight:800;color:var(--line);flex-shrink:0;line-height:1}
+.chap-title{font-family:var(--display);font-size:23px;font-weight:700;line-height:1.25}
+.chap-sub{color:var(--ink-soft);font-size:15px;margin:6px 0 0}
+
+.plain-box{background:var(--blue-soft);border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px 18px;margin:18px 0;font-size:15px}
+.plain-box b{color:var(--blue)}
+
+.app-scenario{border-radius:14px;padding:20px 22px;margin:18px 0;position:relative}
+.app-scenario.amazon{background:var(--amber-soft);border:1px solid #F0DBA8}
+.app-scenario.instagram{background:linear-gradient(135deg,#F8ECF7,#FBEAE5);border:1px solid #EAD0E0}
+.app-scenario.youtube{background:var(--danger-soft);border:1px solid #F1C9BC}
+.app-scenario.whatsapp{background:var(--teal-soft);border:1px solid #BEE3D8}
+.app-scenario-tag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
+.app-scenario-tag .dot{width:8px;height:8px;border-radius:50%}
+.app-scenario.amazon .app-scenario-tag{color:#8A5A00}
+.app-scenario.amazon .dot{background:#E8A400}
+.app-scenario.instagram .app-scenario-tag{color:#A23A6B}
+.app-scenario.instagram .dot{background:linear-gradient(135deg,#833AB4,#E1306C,#F77737)}
+.app-scenario.youtube .app-scenario-tag{color:#B01F1F}
+.app-scenario.youtube .dot{background:#FF0000}
+.app-scenario.whatsapp .app-scenario-tag{color:#0A6B57}
+.app-scenario.whatsapp .dot{background:#25D366}
+.app-scenario p{font-size:14.5px}
+.app-scenario p+p{margin-top:8px}
+
+pre[class*="language-"]{background:var(--code-bg)!important;border-radius:12px;margin:16px 0;font-size:13px;max-height:520px}
+code[class*="language-"]{font-family:var(--mono)}
+:not(pre)>code{font-family:var(--mono);background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.88em;color:var(--teal)}
+
+.callout{border-radius:12px;padding:14px 18px;margin:14px 0;font-size:14px;display:flex;gap:11px;align-items:flex-start}
+.callout .icon{flex-shrink:0;font-size:16px;line-height:1.4}
+.callout.tip{background:var(--teal-soft)}
+.callout.pitfall{background:var(--danger-soft)}
+.callout b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.callout.tip b{color:#0A6B57}
+.callout.pitfall b{color:#A0341B}
+
+.chap-list{margin:12px 0 12px 4px}
+.chap-list li{margin-left:18px;margin-bottom:6px;font-size:14.5px}
+
+footer{max-width:1240px;margin:0 auto;padding:30px 20px 60px;text-align:center;color:var(--ink-soft);font-size:13px}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto;padding:16px}
+  .intro-grid{grid-template-columns:1fr}
+  .chapter{padding:26px 20px}
+  .hero{padding:28px 22px}
+}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  var saved = localStorage.getItem('sbg-theme');
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === 'dark' || (!saved && prefersDark)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+</script>
+<div id="progress"></div>
+<div id="roadmap-overlay" class="roadmap-overlay">
+  <div class="roadmap-modal">
+    <button id="roadmap-close" class="roadmap-close" type="button" aria-label="Close roadmap">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+    </button>
+    <div class="roadmap-header">
+      <span class="eyebrow">LEARNING PATH</span>
+      <h2>Basic → Advanced, at a glance</h2>
+      <p>All 45 chapters, grouped by difficulty. Tap any chapter to jump straight to it.</p>
+    </div>
+
+    <div class="roadmap-tier basic">
+      <div class="roadmap-tier-label"><span class="tier-dot"></span>Basic <span class="tier-count">— core Spring Boot, 6 chapters</span></div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Foundations</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c1"><span class="chip-num">1</span>Spring Boot vs Spring</a>
+          <a class="roadmap-chip" href="#c2"><span class="chip-num">2</span>IoC &amp; DI</a>
+          <a class="roadmap-chip" href="#c3"><span class="chip-num">3</span>Auto-Config &amp; Starters</a>
+          <a class="roadmap-chip" href="#c4"><span class="chip-num">4</span>Stereotype Annotations</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Web &amp; Data</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c5"><span class="chip-num">5</span>Spring MVC (REST)</a>
+          <a class="roadmap-chip" href="#c6"><span class="chip-num">6</span>Spring Data JPA</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-tier intermediate">
+      <div class="roadmap-tier-label"><span class="tier-dot"></span>Intermediate <span class="tier-count">— building production apps, 13 chapters</span></div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Config &amp; Lifecycle</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c7"><span class="chip-num">7</span>Bean Scopes &amp; Lifecycle</a>
+          <a class="roadmap-chip" href="#c8"><span class="chip-num">8</span>Config Properties &amp; Profiles</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Robustness</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c9"><span class="chip-num">9</span>Validation</a>
+          <a class="roadmap-chip" href="#c10"><span class="chip-num">10</span>Exception Handling</a>
+          <a class="roadmap-chip" href="#c11"><span class="chip-num">11</span>AOP</a>
+          <a class="roadmap-chip" href="#c12"><span class="chip-num">12</span>Transactions</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Runtime</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c13"><span class="chip-num">13</span>Caching</a>
+          <a class="roadmap-chip" href="#c14"><span class="chip-num">14</span>Async Processing</a>
+          <a class="roadmap-chip" href="#c15"><span class="chip-num">15</span>Scheduling</a>
+          <a class="roadmap-chip" href="#c16"><span class="chip-num">16</span>Spring Events</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Security, Ops &amp; Testing</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c17"><span class="chip-num">17</span>Spring Security</a>
+          <a class="roadmap-chip" href="#c18"><span class="chip-num">18</span>Actuator</a>
+          <a class="roadmap-chip" href="#c19"><span class="chip-num">19</span>Testing</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-tier advanced">
+      <div class="roadmap-tier-label"><span class="tier-dot"></span>Advanced <span class="tier-count">— scale, cloud &amp; distributed systems, 26 chapters</span></div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Data Store Options</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c20"><span class="chip-num">20</span>NoSQL — MongoDB</a>
+          <a class="roadmap-chip" href="#c21"><span class="chip-num">21</span>Redis as a Store</a>
+          <a class="roadmap-chip" href="#c22"><span class="chip-num">22</span>Cassandra</a>
+          <a class="roadmap-chip" href="#c23"><span class="chip-num">23</span>Elasticsearch</a>
+          <a class="roadmap-chip" href="#c24"><span class="chip-num">24</span>Cache Providers</a>
+          <a class="roadmap-chip" href="#c25"><span class="chip-num">25</span>Databases on AWS</a>
+          <a class="roadmap-chip" href="#c26"><span class="chip-num">26</span>Databases on Azure</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Resiliency</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c27"><span class="chip-num">27</span>Circuit Breaker</a>
+          <a class="roadmap-chip" href="#c28"><span class="chip-num">28</span>Retry with Backoff</a>
+          <a class="roadmap-chip" href="#c29"><span class="chip-num">29</span>Rate Limiter</a>
+          <a class="roadmap-chip" href="#c30"><span class="chip-num">30</span>Bulkhead &amp; Timeout</a>
+          <a class="roadmap-chip" href="#c31"><span class="chip-num">31</span>Distributed Tx (Saga)</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Messaging &amp; Real-Time</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c32"><span class="chip-num">32</span>Kafka</a>
+          <a class="roadmap-chip" href="#c33"><span class="chip-num">33</span>RabbitMQ</a>
+          <a class="roadmap-chip" href="#c34"><span class="chip-num">34</span>WebSocket / STOMP</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Microservices &amp; Cloud</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c35"><span class="chip-num">35</span>Service Discovery</a>
+          <a class="roadmap-chip" href="#c36"><span class="chip-num">36</span>API Gateway</a>
+          <a class="roadmap-chip" href="#c37"><span class="chip-num">37</span>Centralized Config</a>
+          <a class="roadmap-chip" href="#c38"><span class="chip-num">38</span>Feign Clients</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Observability</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c39"><span class="chip-num">39</span>Distributed Tracing</a>
+          <a class="roadmap-chip" href="#c40"><span class="chip-num">40</span>Metrics &amp; Dashboards</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Security Extras</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c41"><span class="chip-num">41</span>OAuth2 / JWT</a>
+          <a class="roadmap-chip" href="#c42"><span class="chip-num">42</span>CORS Configuration</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">Batch &amp; Files</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c43"><span class="chip-num">43</span>Spring Batch</a>
+          <a class="roadmap-chip" href="#c44"><span class="chip-num">44</span>File Upload Handling</a>
+        </div>
+      </div>
+      <div class="roadmap-group">
+        <div class="roadmap-group-title">API Docs</div>
+        <div class="roadmap-chips">
+          <a class="roadmap-chip" href="#c45"><span class="chip-num">45</span>OpenAPI / Swagger</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">S</div>
+    <div class="brand-text">Spring Boot<span>Core components, real apps</span></div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+  </div>
+
+  <div class="apps-legend">
+    <span class="app-chip amazon"><span class="dot"></span>Amazon</span>
+    <span class="app-chip instagram"><span class="dot"></span>Instagram</span>
+    <span class="app-chip youtube"><span class="dot"></span>YouTube</span>
+    <span class="app-chip whatsapp"><span class="dot"></span>WhatsApp</span>
+  </div>
+
+  <button id="roadmap-toggle" class="roadmap-btn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+    View Roadmap
+  </button>
+
+  <nav id="toc">
+    <div class="toc-part">Start here</div>
+    <a class="toc-link" href="#intro"><span class="toc-num">·</span>How to read this guide</a>
+
+    <div class="toc-part">Part 1 — Foundations</div>
+    <a class="toc-link" href="#c1"><span class="toc-num">01</span>Spring Boot vs Spring</a>
+    <a class="toc-link" href="#c2"><span class="toc-num">02</span>IoC &amp; Dependency Injection</a>
+    <a class="toc-link" href="#c3"><span class="toc-num">03</span>Auto-Configuration &amp; Starters</a>
+    <a class="toc-link" href="#c4"><span class="toc-num">04</span>Stereotype Annotations</a>
+
+    <div class="toc-part">Part 2 — Web &amp; Data</div>
+    <a class="toc-link" href="#c5"><span class="toc-num">05</span>Spring MVC (REST)</a>
+    <a class="toc-link" href="#c6"><span class="toc-num">06</span>Spring Data JPA</a>
+
+    <div class="toc-part">Part 3 — Config &amp; Lifecycle</div>
+    <a class="toc-link" href="#c7"><span class="toc-num">07</span>Bean Scopes &amp; Lifecycle</a>
+    <a class="toc-link" href="#c8"><span class="toc-num">08</span>Config Properties &amp; Profiles</a>
+
+    <div class="toc-part">Part 4 — Robustness</div>
+    <a class="toc-link" href="#c9"><span class="toc-num">09</span>Validation</a>
+    <a class="toc-link" href="#c10"><span class="toc-num">10</span>Exception Handling</a>
+    <a class="toc-link" href="#c11"><span class="toc-num">11</span>AOP</a>
+    <a class="toc-link" href="#c12"><span class="toc-num">12</span>Transactions</a>
+
+    <div class="toc-part">Part 5 — Runtime</div>
+    <a class="toc-link" href="#c13"><span class="toc-num">13</span>Caching</a>
+    <a class="toc-link" href="#c14"><span class="toc-num">14</span>Async Processing</a>
+    <a class="toc-link" href="#c15"><span class="toc-num">15</span>Scheduling</a>
+    <a class="toc-link" href="#c16"><span class="toc-num">16</span>Spring Events</a>
+
+    <div class="toc-part">Part 6 — Security, Ops &amp; Tests</div>
+    <a class="toc-link" href="#c17"><span class="toc-num">17</span>Spring Security</a>
+    <a class="toc-link" href="#c18"><span class="toc-num">18</span>Actuator</a>
+    <a class="toc-link" href="#c19"><span class="toc-num">19</span>Testing</a>
+
+    <div class="toc-part">Part 7 — Data Store Options</div>
+    <a class="toc-link" href="#c20"><span class="toc-num">20</span>NoSQL — MongoDB</a>
+    <a class="toc-link" href="#c21"><span class="toc-num">21</span>Redis as a Data Store</a>
+    <a class="toc-link" href="#c22"><span class="toc-num">22</span>Wide-Column — Cassandra</a>
+    <a class="toc-link" href="#c23"><span class="toc-num">23</span>Search — Elasticsearch</a>
+    <a class="toc-link" href="#c24"><span class="toc-num">24</span>Choosing a Cache Provider</a>
+    <a class="toc-link" href="#c25"><span class="toc-num">25</span>Databases on AWS</a>
+    <a class="toc-link" href="#c26"><span class="toc-num">26</span>Databases on Azure</a>
+
+    <div class="toc-part">Part 8 — Resiliency</div>
+    <a class="toc-link" href="#c27"><span class="toc-num">27</span>Circuit Breaker</a>
+    <a class="toc-link" href="#c28"><span class="toc-num">28</span>Retry with Backoff</a>
+    <a class="toc-link" href="#c29"><span class="toc-num">29</span>Rate Limiter</a>
+    <a class="toc-link" href="#c30"><span class="toc-num">30</span>Bulkhead &amp; Timeout</a>
+    <a class="toc-link" href="#c31"><span class="toc-num">31</span>Distributed Tx (Saga)</a>
+
+    <div class="toc-part">Part 9 — Messaging &amp; Real-Time</div>
+    <a class="toc-link" href="#c32"><span class="toc-num">32</span>Kafka Integration</a>
+    <a class="toc-link" href="#c33"><span class="toc-num">33</span>RabbitMQ Integration</a>
+    <a class="toc-link" href="#c34"><span class="toc-num">34</span>WebSocket / STOMP</a>
+
+    <div class="toc-part">Part 10 — Microservices &amp; Cloud</div>
+    <a class="toc-link" href="#c35"><span class="toc-num">35</span>Service Discovery</a>
+    <a class="toc-link" href="#c36"><span class="toc-num">36</span>API Gateway</a>
+    <a class="toc-link" href="#c37"><span class="toc-num">37</span>Centralized Config</a>
+    <a class="toc-link" href="#c38"><span class="toc-num">38</span>Feign REST Clients</a>
+
+    <div class="toc-part">Part 11 — Observability</div>
+    <a class="toc-link" href="#c39"><span class="toc-num">39</span>Distributed Tracing</a>
+    <a class="toc-link" href="#c40"><span class="toc-num">40</span>Metrics &amp; Dashboards</a>
+
+    <div class="toc-part">Part 12 — Security Extras</div>
+    <a class="toc-link" href="#c41"><span class="toc-num">41</span>OAuth2 / JWT</a>
+    <a class="toc-link" href="#c42"><span class="toc-num">42</span>CORS Configuration</a>
+
+    <div class="toc-part">Part 13 — Batch &amp; Files</div>
+    <a class="toc-link" href="#c43"><span class="toc-num">43</span>Spring Batch</a>
+    <a class="toc-link" href="#c44"><span class="toc-num">44</span>File Upload Handling</a>
+
+    <div class="toc-part">Part 14 — API Docs</div>
+    <a class="toc-link" href="#c45"><span class="toc-num">45</span>OpenAPI / Swagger</a>
+  </nav>
+</aside>
+
+<main>
+  <section class="hero">
+    <span class="hero-eyebrow">SPRING BOOT · CORE COMPONENTS</span>
+    <h1>Every core Spring Boot component, taught through the apps you use daily</h1>
+    <p>19 chapters. Each one explains a component in plain English, then shows the exact business problem it solves inside Amazon, Instagram, YouTube, or WhatsApp — followed by runnable Spring Boot code for that scenario.</p>
+    <div class="hero-apps">
+      <div class="hero-app-card">🛒 Amazon — orders, inventory, payments</div>
+      <div class="hero-app-card">📸 Instagram — posts, follows, feed</div>
+      <div class="hero-app-card">▶️ YouTube — uploads, views, streaming</div>
+      <div class="hero-app-card">💬 WhatsApp — messages, delivery, presence</div>
+    </div>
+  </section>
+
+  <section id="intro">
+    <div class="intro-grid">
+      <div class="intro-card">
+        <h3>🎯 What this covers</h3>
+        <p>The components that actually come up in day-to-day Spring Boot work and in interviews: DI, auto-config, MVC, JPA, AOP, transactions, caching, async, security, actuator, and more.</p>
+      </div>
+      <div class="intro-card">
+        <h3>🧩 Why 4 apps, not 1</h3>
+        <p>Some components fit an e-commerce mental model best (transactions, inventory), others fit social feeds (caching a feed) or messaging (events, async). Each chapter uses whichever app makes the concept click fastest.</p>
+      </div>
+      <div class="intro-card">
+        <h3>▶️ How to read a chapter</h3>
+        <p>Plain-English definition → the real app scenario → runnable code for that exact scenario → a pitfall and a tip. Skim the first two if you already know the concept; read the code either way.</p>
+      </div>
+    </div>
+
+    <div class="template-strip">
+      <div class="template-step"><span class="n">1</span>Plain-English idea</div>
+      <span class="template-arrow">→</span>
+      <div class="template-step"><span class="n">2</span>Real app scenario</div>
+      <span class="template-arrow">→</span>
+      <div class="template-step"><span class="n">3</span>Runnable code</div>
+      <span class="template-arrow">→</span>
+      <div class="template-step"><span class="n">4</span>Pitfall + tip</div>
+    </div>
+  </section>
+  <!-- ================= CHAPTER 1 ================= -->
+  <section class="chapter" id="c1">
+    <div class="chap-part-label">Part 1 — Foundations</div>
+    <div class="chap-head">
+      <div class="chap-num">01</div>
+      <div>
+        <div class="chap-title">Spring Boot vs the Spring Framework</div>
+        <p class="chap-sub">Same engine, but Boot removes the assembly required to start it.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Spring Framework gives you all the building blocks (DI, MVC, data access) but you wire everything yourself in XML or Java config. Spring Boot is Spring plus sane defaults — an embedded server, auto-configured beans, and one dependency ("starter") per feature — so you get a running app in minutes instead of days.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — checkout service</div>
+      <p>Before Boot, a team standing up Amazon's checkout service had to hand-configure a <code>DispatcherServlet</code>, deploy a WAR to a Tomcat server, wire a <code>DataSource</code> bean, and set up a view resolver — all before writing a single line of checkout logic.</p>
+      <p>With Spring Boot, the same team runs <code>mvn spring-boot:run</code> and gets an embedded Tomcat, JSON serialization, and a connection pool out of the box. They spend day one writing the <code>CheckoutController</code>, not XML.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">// This ONE class is a complete, runnable web application in Spring Boot.
+// No web.xml, no external Tomcat install, no manually registered servlets.
+
+@SpringBootApplication   // = @Configuration + @EnableAutoConfiguration + @ComponentScan
+public class AmazonCheckoutApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(AmazonCheckoutApplication.class, args);
+        // Embedded Tomcat starts on :8080 automatically.
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Spring Boot is not a replacement for Spring — every <code>@Service</code>, <code>@Autowired</code>, and <code>ApplicationContext</code> you use is still plain Spring. Boot only automates the setup.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 2 ================= -->
+  <section class="chapter" id="c2">
+    <div class="chap-part-label">Part 1 — Foundations</div>
+    <div class="chap-head">
+      <div class="chap-num">02</div>
+      <div>
+        <div class="chap-title">IoC Container &amp; Dependency Injection</div>
+        <p class="chap-sub">Classes declare what they need; Spring hands them a ready-made instance.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Instead of a class creating its own dependencies with <code>new</code>, it just declares what it needs in its constructor. Spring's IoC (Inversion of Control) container builds every bean once at startup and injects the right instances wherever they're needed. You get loose coupling and classes that are trivial to test.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — placing an order</div>
+      <p><code>OrderService</code> needs to charge a card and reduce stock. It doesn't know or care how <code>PaymentService</code> talks to the payment gateway, or how <code>InventoryService</code> talks to the warehouse database — it just asks for both in its constructor, and Spring supplies them.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Service
+public class PaymentService {
+    public void charge(String orderId, BigDecimal amount) {
+        // talks to the payment gateway
+    }
+}
+
+@Service
+public class InventoryService {
+    public void reserveStock(String sku, int qty) {
+        // decrements warehouse stock
+    }
+}
+
+@Service
+public class OrderService {
+
+    private final PaymentService paymentService;
+    private final InventoryService inventoryService;
+
+    // Constructor injection: Spring sees this constructor, finds a
+    // PaymentService bean and an InventoryService bean, and passes them in.
+    // No "new PaymentService()" anywhere in this class.
+    public OrderService(PaymentService paymentService,
+                         InventoryService inventoryService) {
+        this.paymentService = paymentService;
+        this.inventoryService = inventoryService;
+    }
+
+    public void placeOrder(String orderId, String sku, int qty, BigDecimal amount) {
+        inventoryService.reserveStock(sku, qty);
+        paymentService.charge(orderId, amount);
+    }
+}</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Field injection (<code>@Autowired</code> directly on a field) works but hides a class's real dependencies and makes it hard to unit test without Spring. Constructor injection — as above — makes dependencies explicit and lets you build the class in a plain JUnit test with <code>new OrderService(mockPayment, mockInventory)</code>.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 3 ================= -->
+  <section class="chapter" id="c3">
+    <div class="chap-part-label">Part 1 — Foundations</div>
+    <div class="chap-head">
+      <div class="chap-num">03</div>
+      <div>
+        <div class="chap-title">Auto-Configuration &amp; Starters</div>
+        <p class="chap-sub">Adding one dependency wires up an entire feature for you.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">A "starter" is a bundle of dependencies for one feature (data access, security, web). Auto-configuration is Spring Boot inspecting what's on your classpath at startup and registering the beans that feature needs — only if you haven't already configured them yourself.</div>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — adding database support</div>
+      <p>A backend engineer wants Instagram's post service to save posts to MySQL. They add one line to <code>pom.xml</code>: <code>spring-boot-starter-data-jpa</code>. On startup, Boot detects a JPA implementation (Hibernate) and a JDBC driver on the classpath, and auto-configures a <code>DataSource</code>, an <code>EntityManagerFactory</code>, and a <code>PlatformTransactionManager</code> — nobody wrote that configuration by hand.</p>
+    </div>
+
+    <pre class="language-xml"><code class="language-xml">&lt;!-- pom.xml — this single starter pulls in Hibernate, HikariCP connection
+     pool, and Spring's JPA support, and triggers their auto-configuration --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+
+    <pre class="language-java"><code class="language-java">// A simplified version of what Spring Boot auto-configures behind the
+// scenes once it sees spring-boot-starter-data-jpa + a MySQL driver.
+// You never write this class yourself — @ConditionalOnClass triggers it.
+
+@Configuration
+@ConditionalOnClass(EntityManagerFactory.class)     // only if JPA is on the classpath
+@ConditionalOnMissingBean(DataSource.class)          // only if YOU haven't defined one
+public class InstagramJpaAutoConfiguration {
+
+    @Bean
+    public DataSource dataSource(DataSourceProperties props) {
+        return props.initializeDataSourceBuilder().build();
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>You can always see exactly what auto-configured and why: run with <code>--debug</code> and check the "CONDITIONS EVALUATION REPORT," or hit <code>/actuator/conditions</code> if Actuator is on the classpath.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 4 ================= -->
+  <section class="chapter" id="c4">
+    <div class="chap-part-label">Part 1 — Foundations</div>
+    <div class="chap-head">
+      <div class="chap-num">04</div>
+      <div>
+        <div class="chap-title">Stereotype Annotations</div>
+        <p class="chap-sub">@Component, @Service, @Repository, @Controller — labels that tell Spring what a class does.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">All four are technically the same thing — they mark a class as a Spring-managed bean so component scanning picks it up. But each name signals intent and unlocks small extra behavior: <code>@Repository</code> auto-translates database exceptions, <code>@Controller</code> plugs into Spring MVC, <code>@Service</code> signals business logic, <code>@Component</code> is the generic fallback.</div>
+
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — the upload path</div>
+      <p>YouTube's "upload a video" flow has one class per layer, each labeled by role: a controller receives the HTTP upload, a service applies business rules (max length, encoding), and a repository saves metadata.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@RestController                                 // handles HTTP requests, returns JSON
+@RequestMapping("/api/videos")
+public class VideoController {
+
+    private final VideoService videoService;
+
+    public VideoController(VideoService videoService) {
+        this.videoService = videoService;
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;VideoResponse&gt; upload(@RequestBody UploadRequest request) {
+        Video saved = videoService.upload(request);
+        return ResponseEntity.ok(VideoResponse.from(saved));
+    }
+}
+
+@Service                                        // business logic: rules, orchestration
+public class VideoService {
+
+    private final VideoRepository videoRepository;
+
+    public VideoService(VideoRepository videoRepository) {
+        this.videoRepository = videoRepository;
+    }
+
+    public Video upload(UploadRequest request) {
+        if (request.durationSeconds() &gt; 43200) {
+            throw new IllegalArgumentException("Video exceeds 12-hour limit");
+        }
+        Video video = new Video(request.title(), request.durationSeconds());
+        return videoRepository.save(video);
+    }
+}
+
+@Repository                                     // data access — DB exceptions become
+public interface VideoRepository                //   Spring's DataAccessException, not
+        extends JpaRepository&lt;Video, Long&gt; {}   //   a raw driver-specific one</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@RestController</code> is just <code>@Controller</code> + <code>@ResponseBody</code> combined — every method's return value is written straight to the HTTP response body as JSON instead of being resolved to a view name.</div></div>
+  </section>
+  <!-- ================= CHAPTER 5 ================= -->
+  <section class="chapter" id="c5">
+    <div class="chap-part-label">Part 2 — Web &amp; Data</div>
+    <div class="chap-head">
+      <div class="chap-num">05</div>
+      <div>
+        <div class="chap-title">Spring MVC — REST Controllers</div>
+        <p class="chap-sub">Annotations map HTTP requests straight to Java methods.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Spring MVC's <code>DispatcherServlet</code> receives every incoming HTTP request and routes it to the right method based on annotations like <code>@GetMapping</code> and <code>@PostMapping</code>. Method parameters are extracted from the URL, query string, or JSON body automatically — you write plain Java and get a REST API.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — product catalog API</div>
+      <p>The product page needs to fetch one product by ID, and the search page needs to list products by category with pagination. Two endpoints, two annotated methods.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+
+    private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
+    // GET /api/products/B08N5WRWNW  -> {id} is pulled from the URL path
+    @GetMapping("/{id}")
+    public ResponseEntity&lt;ProductResponse&gt; getProduct(@PathVariable String id) {
+        return productService.findById(id)
+                .map(p -&gt; ResponseEntity.ok(ProductResponse.from(p)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // GET /api/products?category=electronics&amp;page=0&amp;size=20
+    @GetMapping
+    public Page&lt;ProductResponse&gt; listProducts(
+            @RequestParam String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return productService.findByCategory(category, PageRequest.of(page, size))
+                .map(ProductResponse::from);
+    }
+
+    // POST /api/products  with a JSON body -> deserialized into NewProductRequest
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductResponse createProduct(@RequestBody NewProductRequest request) {
+        return ProductResponse.from(productService.create(request));
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>ResponseEntity</code> lets you control the exact HTTP status and headers (404 for a missing product), while a plain return type like <code>Page&lt;ProductResponse&gt;</code> always returns 200. Use <code>ResponseEntity</code> whenever the outcome can genuinely differ.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 6 ================= -->
+  <section class="chapter" id="c6">
+    <div class="chap-part-label">Part 2 — Web &amp; Data</div>
+    <div class="chap-head">
+      <div class="chap-num">06</div>
+      <div>
+        <div class="chap-title">Spring Data JPA</div>
+        <p class="chap-sub">Write an interface; Spring generates the SQL-executing implementation.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">You define a repository interface extending <code>JpaRepository</code>, and Spring generates a working implementation at startup — no DAO boilerplate, no hand-written SQL for common cases. Method names like <code>findByUserIdOrderByCreatedAtDesc</code> are parsed and turned into queries automatically.</div>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — loading a user's feed</div>
+      <p>The feed screen needs the newest posts from a given user, and separately, a count of how many posts they've made this week for a "trending creator" badge. One derived query method, one JPQL query — both without a single line of raw SQL.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">public interface PostRepository extends JpaRepository&lt;Post, Long&gt; {
+
+    // Derived query: Spring parses the method name and builds the SQL for you.
+    // "findBy" + "UserId" + "OrderByCreatedAtDesc" ->
+    //   SELECT * FROM post WHERE user_id = ? ORDER BY created_at DESC
+    List&lt;Post&gt; findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+    // JPQL for anything a method name can't express cleanly
+    @Query("SELECT COUNT(p) FROM Post p WHERE p.userId = :userId AND p.createdAt >= :since")
+    long countRecentPosts(@Param("userId") Long userId, @Param("since") Instant since);
+}
+
+@Service
+public class FeedService {
+
+    private final PostRepository postRepository;
+
+    public FeedService(PostRepository postRepository) {
+        this.postRepository = postRepository;
+    }
+
+    public List&lt;Post&gt; loadFeed(Long userId, int page) {
+        return postRepository.findByUserIdOrderByCreatedAtDesc(
+                userId, PageRequest.of(page, 10));
+    }
+
+    public boolean isTrendingThisWeek(Long userId) {
+        Instant weekAgo = Instant.now().minus(7, ChronoUnit.DAYS);
+        return postRepository.countRecentPosts(userId, weekAgo) &gt;= 5;
+    }
+}</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Loading a feed of posts and then accessing <code>post.getComments()</code> in a loop, one post at a time, triggers a separate SQL query per post — the classic N+1 problem. Fix it with a JPQL <code>JOIN FETCH</code> or an <code>@EntityGraph</code> so comments load in the same query as the posts.</div></div>
+  </section>
+  <!-- ================= CHAPTER 7 ================= -->
+  <section class="chapter" id="c7">
+    <div class="chap-part-label">Part 3 — Config &amp; Lifecycle</div>
+    <div class="chap-head">
+      <div class="chap-num">07</div>
+      <div>
+        <div class="chap-title">Bean Scopes &amp; Lifecycle</div>
+        <p class="chap-sub">How many instances Spring creates, and the hooks around their birth and death.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">By default every Spring bean is a <b>singleton</b> — one shared instance for the whole app. <b>Prototype</b> scope creates a new instance every time it's requested. <code>@PostConstruct</code> runs right after a bean's dependencies are injected; <code>@PreDestroy</code> runs right before the app shuts down — useful for opening and closing expensive resources exactly once.</div>
+
+    <div class="app-scenario whatsapp">
+      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — the connection manager</div>
+      <p>WhatsApp's backend keeps one pool of persistent connections to its message broker for the entire application — creating a new pool per request would exhaust resources instantly. That's a singleton by nature, and it needs to open the pool on startup and close it cleanly on shutdown so no messages are dropped mid-flight.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Component   // singleton by default — Spring creates exactly ONE instance
+public class MessageBrokerConnectionManager {
+
+    private BrokerConnectionPool pool;
+
+    @PostConstruct   // runs once, right after this bean's fields/dependencies are set
+    public void openConnections() {
+        pool = BrokerConnectionPool.open(50);   // 50 persistent connections
+        System.out.println("Broker pool opened with 50 connections");
+    }
+
+    public void send(Message message) {
+        pool.borrowConnection().send(message);
+    }
+
+    @PreDestroy   // runs once, right before the application context shuts down
+    public void closeConnections() {
+        pool.drainAndClose();   // finish in-flight sends before closing
+        System.out.println("Broker pool drained and closed");
+    }
+}
+
+// Contrast: a PDF invoice generator used per-request needs fresh, isolated state
+// (a mutable document builder) each time it's injected — prototype scope fits here.
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class InvoicePdfBuilder {
+    private final StringBuilder content = new StringBuilder();  // must not be shared
+}</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Injecting a prototype bean into a singleton only creates it <i>once</i> — at the singleton's construction time — because the singleton holds onto that single instance forever after. To get a fresh prototype on every call, inject an <code>ObjectProvider&lt;InvoicePdfBuilder&gt;</code> and call <code>.getObject()</code> each time.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 8 ================= -->
+  <section class="chapter" id="c8">
+    <div class="chap-part-label">Part 3 — Config &amp; Lifecycle</div>
+    <div class="chap-head">
+      <div class="chap-num">08</div>
+      <div>
+        <div class="chap-title">Configuration Properties &amp; Profiles</div>
+        <p class="chap-sub">Same code, different settings for dev, staging, and production.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Hard-coding URLs, keys, and limits means rebuilding the app for every environment. Spring Boot externalizes them into <code>application.yml</code> files, with <code>@ConfigurationProperties</code> binding a whole block of settings to a typed Java object, and <b>profiles</b> letting you swap entire config blocks based on which environment is active.</div>
+
+    <div class="app-scenario whatsapp">
+      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — SMS gateway for OTP verification</div>
+      <p>WhatsApp's phone-verification service sends OTPs through a sandbox SMS gateway in development and a real, rate-limited provider in production — same code, different endpoint, key, and retry limit per environment.</p>
+    </div>
+
+    <pre class="language-yaml"><code class="language-yaml"># application.yml (shared defaults)
+sms-gateway:
+  retry-attempts: 3
+  timeout-ms: 2000
+
+---
+# application-dev.yml
+sms-gateway:
+  base-url: https://sandbox.smsgateway.test
+  api-key: dev-sandbox-key
+
+---
+# application-prod.yml
+sms-gateway:
+  base-url: https://api.smsgateway.com
+  api-key: ${SMS_GATEWAY_KEY}   # injected from an environment variable, never committed
+  retry-attempts: 5</code></pre>
+
+    <pre class="language-java"><code class="language-java">@ConfigurationProperties(prefix = "sms-gateway")
+public class SmsGatewayProperties {
+    private String baseUrl;
+    private String apiKey;
+    private int retryAttempts;
+    private int timeoutMs;
+    // getters and setters omitted
+}
+
+@Service
+public class OtpService {
+
+    private final SmsGatewayProperties properties;
+
+    public OtpService(SmsGatewayProperties properties) {
+        this.properties = properties;   // baseUrl/apiKey differ per active profile
+    }
+
+    public void sendOtp(String phoneNumber, String code) {
+        // calls properties.getBaseUrl() with properties.getApiKey()
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Activate a profile with <code>--spring.profiles.active=prod</code> on the command line, or <code>SPRING_PROFILES_ACTIVE=prod</code> as an environment variable — never hard-code which profile is active inside the jar itself.</div></div>
+  </section>
+  <!-- ================= CHAPTER 9 ================= -->
+  <section class="chapter" id="c9">
+    <div class="chap-part-label">Part 4 — Robustness</div>
+    <div class="chap-head">
+      <div class="chap-num">09</div>
+      <div>
+        <div class="chap-title">Validation</div>
+        <p class="chap-sub">Reject bad input before it ever reaches your business logic.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Bean Validation annotations (<code>@NotBlank</code>, <code>@Email</code>, <code>@Size</code>) go directly on a request object's fields. Adding <code>@Valid</code> in the controller tells Spring to check every rule before the method body runs — invalid input never reaches your service layer at all.</div>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — sign-up form</div>
+      <p>A new account needs a real-looking email, a username of reasonable length, and a password meeting a minimum strength — checked in one place, consistently, instead of scattered <code>if</code> statements across the codebase.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">public record SignupRequest(
+
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 30, message = "Username must be 3-30 characters")
+    String username,
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be a valid address")
+    String email,
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    String password
+) {}
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @PostMapping("/signup")
+    public ResponseEntity&lt;Void&gt; signup(@Valid @RequestBody SignupRequest request) {
+        // If validation fails, this method body never runs —
+        // Spring throws MethodArgumentNotValidException first.
+        accountService.createAccount(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Pair this with a <code>@ControllerAdvice</code> (next chapter) that catches <code>MethodArgumentNotValidException</code> and turns it into a clean JSON error listing every failed field — instead of Spring's default, noisy stack-trace response.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 10 ================= -->
+  <section class="chapter" id="c10">
+    <div class="chap-part-label">Part 4 — Robustness</div>
+    <div class="chap-head">
+      <div class="chap-num">10</div>
+      <div>
+        <div class="chap-title">Global Exception Handling</div>
+        <p class="chap-sub">One place to turn every exception into a clean, consistent API response.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Without central handling, every controller ends up with its own scattered try/catch blocks, and clients get inconsistent error shapes. <code>@RestControllerAdvice</code> plus <code>@ExceptionHandler</code> intercepts exceptions thrown anywhere in any controller and maps them to one consistent JSON error format and HTTP status.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — checkout failure</div>
+      <p>A shopper tries to buy the last unit of a product that just sold out to someone else a second earlier. <code>InventoryService</code> throws <code>OutOfStockException</code> — and every endpoint in the app that can run out of stock returns the exact same clean 409 response, without repeating the same catch block everywhere.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">public class OutOfStockException extends RuntimeException {
+    public OutOfStockException(String sku) {
+        super("Product " + sku + " is out of stock");
+    }
+}
+
+public record ApiError(String message, int status) {}
+
+@RestControllerAdvice   // applies to every @RestController in the app
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(OutOfStockException.class)
+    public ResponseEntity&lt;ApiError&gt; handleOutOfStock(OutOfStockException ex) {
+        ApiError error = new ApiError(ex.getMessage(), 409);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ApiError&gt; handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+        return ResponseEntity.badRequest().body(new ApiError(message, 400));
+    }
+
+    @ExceptionHandler(Exception.class)   // catch-all safety net
+    public ResponseEntity&lt;ApiError&gt; handleUnexpected(Exception ex) {
+        return ResponseEntity.internalServerError()
+                .body(new ApiError("Something went wrong", 500));
+    }
+}</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Order matters: put specific exception handlers (<code>OutOfStockException</code>) before the generic <code>Exception.class</code> catch-all. Spring picks the most specific match, but a sloppy catch-all higher up can accidentally swallow errors you meant to handle precisely.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 11 ================= -->
+  <section class="chapter" id="c11">
+    <div class="chap-part-label">Part 4 — Robustness</div>
+    <div class="chap-head">
+      <div class="chap-num">11</div>
+      <div>
+        <div class="chap-title">AOP — Aspect-Oriented Programming</div>
+        <p class="chap-sub">Cross-cutting concerns like logging and auditing, without touching business code.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Some concerns — logging, auditing, timing, retries — apply across many unrelated methods. Instead of copy-pasting logging code into every method, AOP lets you write it once as an "aspect" and declare, with a <code>@Pointcut</code> expression, which methods it should wrap around.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — audit trail on checkout</div>
+      <p>Every method in the checkout package needs to be logged for compliance: who called it, with what arguments, how long it took. Writing that logging code inside <code>placeOrder</code>, <code>applyDiscount</code>, and every other checkout method would be repetitive and easy to forget on new methods.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Aspect
+@Component
+public class CheckoutAuditAspect {
+
+    private static final Logger log = LoggerFactory.getLogger(CheckoutAuditAspect.class);
+
+    // Matches every public method in every class under the checkout package —
+    // new methods added later are covered automatically, no extra wiring needed.
+    @Around("execution(public * com.amazon.checkout..*.*(..))")
+    public Object auditCall(ProceedingJoinPoint joinPoint) throws Throwable {
+        String method = joinPoint.getSignature().toShortString();
+        long start = System.currentTimeMillis();
+
+        log.info("AUDIT: entering {} with args={}", method, joinPoint.getArgs());
+        Object result = joinPoint.proceed();   // actually runs placeOrder(), etc.
+        long durationMs = System.currentTimeMillis() - start;
+
+        log.info("AUDIT: {} completed in {}ms", method, durationMs);
+        return result;
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@Around</code> is the most powerful advice type because it wraps the method entirely — you decide whether <code>joinPoint.proceed()</code> even runs. For simpler cases, <code>@Before</code> and <code>@AfterReturning</code> are easier to reason about and harder to misuse.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 12 ================= -->
+  <section class="chapter" id="c12">
+    <div class="chap-part-label">Part 4 — Robustness</div>
+    <div class="chap-head">
+      <div class="chap-num">12</div>
+      <div>
+        <div class="chap-title">Transactions — @Transactional</div>
+        <p class="chap-sub">Multiple database writes that must all succeed together, or none at all.</p>
+      </div>
+    </div>
+
+    <div class="plain-box"><code>@Transactional</code> wraps a method in a database transaction: if every statement inside succeeds, the changes commit together; if any exception is thrown, everything rolls back as if none of it happened. It's the difference between "partially broken data" and "nothing changed."</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — placing an order</div>
+      <p>Placing an order does three things: reserve stock, charge the card, create the order record. If the payment gateway fails after stock was already reserved, that reservation must be undone — otherwise the item is stuck "reserved" forever with no successful order behind it.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Service
+public class OrderService {
+
+    private final InventoryRepository inventoryRepository;
+    private final PaymentService paymentService;
+    private final OrderRepository orderRepository;
+
+    public OrderService(InventoryRepository inventoryRepository,
+                         PaymentService paymentService,
+                         OrderRepository orderRepository) {
+        this.inventoryRepository = inventoryRepository;
+        this.paymentService = paymentService;
+        this.orderRepository = orderRepository;
+    }
+
+    @Transactional   // all three steps commit together, or none do
+    public Order placeOrder(String sku, int qty, BigDecimal amount) {
+        inventoryRepository.reserveStock(sku, qty);       // step 1: DB write
+
+        boolean charged = paymentService.charge(amount);   // step 2: external call
+        if (!charged) {
+            throw new PaymentFailedException("Card declined");
+            // exception thrown -> Spring rolls back step 1 automatically
+        }
+
+        return orderRepository.save(new Order(sku, qty, amount));  // step 3: DB write
+    }
+}</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Calling an <code>@Transactional</code> method from another method in the <i>same class</i> bypasses the transaction entirely — Spring implements it via a proxy that wraps external calls only, and self-invocation skips the proxy. Call it through an injected bean (a different class) to get the transaction to actually apply.</div></div>
+  </section>
+  <!-- ================= CHAPTER 13 ================= -->
+  <section class="chapter" id="c13">
+    <div class="chap-part-label">Part 5 — Runtime</div>
+    <div class="chap-head">
+      <div class="chap-num">13</div>
+      <div>
+        <div class="chap-title">Caching — @Cacheable</div>
+        <p class="chap-sub">Skip the database entirely for data that doesn't change every second.</p>
+      </div>
+    </div>
+
+    <div class="plain-box"><code>@Cacheable</code> stores a method's return value the first time it runs for a given set of arguments. Every later call with the same arguments returns the cached value instantly, skipping the method body — and the database — completely, until the cache entry is evicted or expires.</div>
+
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — video metadata on a viral video</div>
+      <p>A video's title, thumbnail, and channel name barely change, but a viral video can be requested millions of times an hour. Hitting the database for the same unchanged metadata on every single view would overwhelm it for no reason.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Service
+public class VideoMetadataService {
+
+    private final VideoRepository videoRepository;
+
+    public VideoMetadataService(VideoRepository videoRepository) {
+        this.videoRepository = videoRepository;
+    }
+
+    // First call for a given videoId hits the DB and stores the result under
+    // the cache name "videoMetadata" keyed by videoId. Every call after that,
+    // for that same videoId, returns the cached object -- this method body
+    // does not run again until the entry is evicted.
+    @Cacheable(value = "videoMetadata", key = "#videoId")
+    public VideoMetadata getMetadata(String videoId) {
+        return videoRepository.findMetadataById(videoId);
+    }
+
+    // Called whenever a creator edits their video's title/thumbnail --
+    // removes the stale entry so the next read re-fetches fresh data.
+    @CacheEvict(value = "videoMetadata", key = "#videoId")
+    public void updateTitle(String videoId, String newTitle) {
+        videoRepository.updateTitle(videoId, newTitle);
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>The default <code>ConcurrentMapCacheManager</code> is in-memory and per-instance — fine for a demo, useless across multiple app servers. For a real multi-instance deployment, back <code>@Cacheable</code> with Redis so every instance shares the same cache.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 14 ================= -->
+  <section class="chapter" id="c14">
+    <div class="chap-part-label">Part 5 — Runtime</div>
+    <div class="chap-head">
+      <div class="chap-num">14</div>
+      <div>
+        <div class="chap-title">Async Processing — @Async</div>
+        <p class="chap-sub">Let the slow part run in the background instead of making the user wait.</p>
+      </div>
+    </div>
+
+    <div class="plain-box"><code>@Async</code> makes a method run on a separate thread pool instead of the caller's thread. The caller moves on immediately without waiting for that method to finish — perfect for work the user doesn't need to wait for, like sending notifications.</div>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — notifying followers of a new post</div>
+      <p>When someone with 50,000 followers posts a photo, notifying every follower can't block the "Post" button response — the poster should see "Posted!" in under a second, while notifications go out in the background over the next few seconds.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@SpringBootApplication
+@EnableAsync   // turns on @Async processing for the whole application
+public class InstagramApplication { }
+
+@Service
+public class PostService {
+
+    private final PostRepository postRepository;
+    private final NotificationService notificationService;
+
+    public PostService(PostRepository postRepository,
+                        NotificationService notificationService) {
+        this.postRepository = postRepository;
+        this.notificationService = notificationService;
+    }
+
+    public Post createPost(NewPostRequest request) {
+        Post saved = postRepository.save(new Post(request));
+
+        // Returns immediately -- doesn't wait for 50,000 notifications to send.
+        notificationService.notifyFollowers(saved);
+
+        return saved;   // the "Posted!" response goes back to the user right now
+    }
+}
+
+@Service
+public class NotificationService {
+
+    @Async   // runs on a background thread pool, not the web request thread
+    public void notifyFollowers(Post post) {
+        List&lt;Long&gt; followerIds = followerRepository.findFollowerIds(post.getUserId());
+        for (Long followerId : followerIds) {
+            pushNotificationClient.send(followerId, post.getUserName() + " just posted");
+        }
+    }
+}</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Exceptions thrown inside a <code>void @Async</code> method are silently swallowed by default — nothing surfaces to the caller. Use <code>AsyncUncaughtExceptionHandler</code>, or return a <code>CompletableFuture</code> so failures are at least visible somewhere.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 15 ================= -->
+  <section class="chapter" id="c15">
+    <div class="chap-part-label">Part 5 — Runtime</div>
+    <div class="chap-head">
+      <div class="chap-num">15</div>
+      <div>
+        <div class="chap-title">Scheduling — @Scheduled</div>
+        <p class="chap-sub">Run a job automatically on a timer, without an external cron server.</p>
+      </div>
+    </div>
+
+    <div class="plain-box"><code>@Scheduled</code> runs a method automatically at a fixed rate, a fixed delay, or on a cron expression — no separate cron daemon, no external scheduler service needed for simple periodic jobs running inside your own app.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — abandoned cart reminder</div>
+      <p>Every night at 2 AM, Amazon needs to find carts that have sat untouched for 24 hours and email a "you left something in your cart" reminder — a routine job that just needs to run reliably on a schedule.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@SpringBootApplication
+@EnableScheduling   // turns on @Scheduled processing for the application
+public class AmazonCartApplication { }
+
+@Component
+public class AbandonedCartJob {
+
+    private final CartRepository cartRepository;
+    private final EmailService emailService;
+
+    public AbandonedCartJob(CartRepository cartRepository, EmailService emailService) {
+        this.cartRepository = cartRepository;
+        this.emailService = emailService;
+    }
+
+    // cron: second minute hour day-of-month month day-of-week
+    // Runs every night at 2:00 AM server time.
+    @Scheduled(cron = "0 0 2 * * *")
+    public void sendAbandonedCartReminders() {
+        Instant cutoff = Instant.now().minus(24, ChronoUnit.HOURS);
+        List&lt;Cart&gt; abandoned = cartRepository.findUntouchedSince(cutoff);
+
+        for (Cart cart : abandoned) {
+            emailService.sendReminder(cart.getUserEmail(), cart.getItems());
+        }
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@Scheduled</code> jobs run on a single thread by default, and only on <i>one</i> instance if you run several — with multiple app servers, an unprotected schedule fires the job once per instance. Use ShedLock or a database lock so only one instance actually executes it.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 16 ================= -->
+  <section class="chapter" id="c16">
+    <div class="chap-part-label">Part 5 — Runtime</div>
+    <div class="chap-head">
+      <div class="chap-num">16</div>
+      <div>
+        <div class="chap-title">Spring Events</div>
+        <p class="chap-sub">Publish a fact once; let every interested part of the app react independently.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Instead of one service directly calling three others whenever something happens, it publishes an event describing what happened. Any number of listeners can react to that event — and new listeners can be added later without touching the code that publishes it.</div>
+
+    <div class="app-scenario whatsapp">
+      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — a message gets delivered</div>
+      <p>When a message reaches the recipient's device, several unrelated things should happen: show a blue "delivered" tick to the sender, update delivery analytics, and clean up the temporary retry queue entry. <code>MessageService</code> shouldn't need to know about all three.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">public class MessageDeliveredEvent {
+    private final String messageId;
+    private final String recipientId;
+    // constructor + getters omitted
+}
+
+@Service
+public class MessageService {
+
+    private final ApplicationEventPublisher eventPublisher;
+
+    public MessageService(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+
+    public void markDelivered(String messageId, String recipientId) {
+        // ... update message status in the DB ...
+
+        // Publish the fact. MessageService has no idea who's listening,
+        // or how many listeners there are.
+        eventPublisher.publishEvent(new MessageDeliveredEvent(messageId, recipientId));
+    }
+}
+
+@Component
+public class DeliveryTickListener {
+    @EventListener
+    public void onDelivered(MessageDeliveredEvent event) {
+        // push the blue double-tick to the sender's device
+    }
+}
+
+@Component
+public class DeliveryAnalyticsListener {
+    @EventListener
+    public void onDelivered(MessageDeliveredEvent event) {
+        // increment a delivery-time metric
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>By default listeners run synchronously on the publisher's thread — one slow listener blocks the whole chain. Add <code>@Async</code> to a listener method (with <code>@EnableAsync</code> already on) to make that specific reaction non-blocking.</div></div>
+  </section>
+  <!-- ================= CHAPTER 17 ================= -->
+  <section class="chapter" id="c17">
+    <div class="chap-part-label">Part 6 — Security, Ops &amp; Testing</div>
+    <div class="chap-head">
+      <div class="chap-num">17</div>
+      <div>
+        <div class="chap-title">Spring Security</div>
+        <p class="chap-sub">A chain of filters decides who's allowed to do what, before your code ever runs.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Every request passes through a chain of security filters first — checking authentication (who are you?) and then authorization (are you allowed to do this?). <code>@PreAuthorize</code> lets you write that authorization rule as an expression right on the method it protects.</div>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — private account posts</div>
+      <p>A private account's posts should be visible to the owner and their accepted followers only — a stranger or a pending (not-yet-accepted) follower gets a 403, not the photo.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Service
+public class ProfileAccessService {
+
+    private final FollowRepository followRepository;
+
+    public ProfileAccessService(FollowRepository followRepository) {
+        this.followRepository = followRepository;
+    }
+
+    public boolean canView(Long viewerId, Long profileOwnerId, AccountType accountType) {
+        if (viewerId.equals(profileOwnerId)) return true;         // it's your own profile
+        if (accountType == AccountType.PUBLIC) return true;        // anyone can view public
+
+        return followRepository.existsByFollowerIdAndFollowingIdAndStatus(
+                viewerId, profileOwnerId, FollowStatus.ACCEPTED);   // must be an accepted follower
+    }
+}
+
+@RestController
+@RequestMapping("/api/users/{userId}/posts")
+public class ProfilePostsController {
+
+    private final ProfileAccessService accessService;
+    private final PostService postService;
+
+    public ProfilePostsController(ProfileAccessService accessService, PostService postService) {
+        this.accessService = accessService;
+        this.postService = postService;
+    }
+
+    // #userId refers to the {userId} path variable; principal is the logged-in user
+    @PreAuthorize("@profileAccessService.canView(principal.id, #userId, @postService.accountTypeOf(#userId))")
+    @GetMapping
+    public List&lt;PostResponse&gt; getPosts(@PathVariable Long userId) {
+        return postService.getPostsFor(userId);   // only reached if canView() returned true
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@PreAuthorize</code> runs <i>before</i> the method body — a denied check throws <code>AccessDeniedException</code> and the controller code never executes at all, which is exactly what you want for sensitive data like private posts.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 18 ================= -->
+  <section class="chapter" id="c18">
+    <div class="chap-part-label">Part 6 — Security, Ops &amp; Testing</div>
+    <div class="chap-head">
+      <div class="chap-num">18</div>
+      <div>
+        <div class="chap-title">Actuator</div>
+        <p class="chap-sub">Production visibility into a running app — health, metrics, and internals over HTTP.</p>
+      </div>
+    </div>
+
+    <div class="plain-box">Adding the Actuator starter exposes ready-made endpoints like <code>/actuator/health</code> and <code>/actuator/metrics</code> that report whether the app (and its dependencies like the database) are healthy, and expose live JVM and request metrics — without writing any monitoring code yourself.</div>
+
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — video transcoding service health</div>
+      <p>An orchestrator (like Kubernetes) needs to know, every few seconds, whether the video-transcoding service is actually healthy and able to reach its storage backend — so it can restart the pod automatically if not, before viewers notice failed uploads.</p>
+    </div>
+
+    <pre class="language-yaml"><code class="language-yaml"># application.yml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: always</code></pre>
+
+    <pre class="language-java"><code class="language-java">// A custom health check: Actuator's /actuator/health aggregates every
+// HealthIndicator bean in the app, including this one, into one report.
+@Component
+public class StorageBackendHealthIndicator implements HealthIndicator {
+
+    private final StorageClient storageClient;
+
+    public StorageBackendHealthIndicator(StorageClient storageClient) {
+        this.storageClient = storageClient;
+    }
+
+    @Override
+    public Health health() {
+        if (storageClient.ping()) {
+            return Health.up().withDetail("backend", "reachable").build();
+        }
+        return Health.down().withDetail("backend", "unreachable").build();
+    }
+}
+
+// GET /actuator/health now returns something like:
+// { "status": "UP", "components": {
+//     "storageBackend": { "status": "UP", "details": { "backend": "reachable" } },
+//     "db": { "status": "UP" } } }</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Never expose every Actuator endpoint (including <code>/env</code> or <code>/heapdump</code>) publicly with no authentication — they can leak secrets or crash the JVM. Restrict which ones are exposed and put them behind Spring Security in production.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 19 ================= -->
+  <section class="chapter" id="c19">
+    <div class="chap-part-label">Part 6 — Security, Ops &amp; Testing</div>
+    <div class="chap-head">
+      <div class="chap-num">19</div>
+      <div>
+        <div class="chap-title">Testing</div>
+        <p class="chap-sub">Spring Boot Test slices let you test one layer without booting the whole app.</p>
+      </div>
+    </div>
+
+    <div class="plain-box"><code>@SpringBootTest</code> boots the full application context for true end-to-end tests. Lighter "slice" annotations like <code>@WebMvcTest</code> load only the web layer, with everything below it mocked — tests run in milliseconds instead of seconds, and only fail for reasons that actually belong to that layer.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — testing the order endpoint</div>
+      <p>The team wants to verify that <code>POST /api/orders</code> returns 409 when <code>OrderService</code> reports the item is out of stock — without spinning up a real database or payment gateway just to check an HTTP status code and JSON shape.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@WebMvcTest(OrderController.class)   // loads only the web layer for OrderController
+class OrderControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean   // OrderService is replaced with a mock -- no real DB, no real payment call
+    private OrderService orderService;
+
+    @Test
+    void returns409WhenOutOfStock() throws Exception {
+        given(orderService.placeOrder(any(), any(), anyInt(), any()))
+                .willThrow(new OutOfStockException("B08N5WRWNW"));
+
+        mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"sku":"B08N5WRWNW","qty":1,"amount":29.99}
+                        """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Product B08N5WRWNW is out of stock"));
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Reach for <code>@SpringBootTest</code> sparingly — for the handful of true end-to-end flows worth verifying. Use <code>@WebMvcTest</code>, <code>@DataJpaTest</code>, and plain constructor-injected unit tests (from Chapter 2) for everything else; a test suite made only of full-context tests becomes painfully slow.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 20 ================= -->
+  <section class="chapter" id="c20">
+    <div class="chap-part-label">Part 7 — Data Store Options</div>
+    <div class="chap-head">
+      <div class="chap-num">20</div>
+      <div>
+        <div class="chap-title">NoSQL — Spring Data MongoDB</div>
+        <p class="chap-sub">A document store for data whose shape changes often.</p>
+      </div>
+    </div>
+    <div class="plain-box">Relational databases force every record into the same fixed columns — great for orders and payments, painful when every record looks different. MongoDB stores JSON-like <b>documents</b> instead: each document can carry its own fields, and adding a new field never requires a schema migration. Spring Data MongoDB gives you the exact same repository pattern you already know from JPA (Chapter 6) — same derived query methods, same <code>save()</code>/<code>findById()</code> — just backed by collections of documents instead of tables of rows. Reach for it when your data is naturally nested or its shape keeps evolving.</div>
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — Stories</div>
+      <p>Think about what a Story actually contains: one might be a plain photo, the next a video with a poll sticker and a location tag, the next a text card with a music clip and a countdown timer. Every new sticker type Instagram ships would mean another nullable column in a SQL table — after two years you'd have a table with 40 columns where most are empty on any given row.</p>
+      <p>As a document, each Story simply carries whatever it has and nothing more. When the team ships a new "Add Yours" sticker, old Stories don't change, new Stories just include the new field, and no database migration runs at 2 AM.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Document(collection = "stories")   // a collection is MongoDB's version of a table
+public class Story {
+    @Id private String id;
+    private Long userId;
+    private String mediaUrl;
+    private Instant createdAt;
+
+    // The flexible part: poll stickers, music clips, countdowns -- each story
+    // stores only the stickers it actually has. No schema change to add new types.
+    private Map&lt;String, Object&gt; stickers;
+}
+
+// Same repository pattern as JPA -- Spring generates the implementation,
+// and the derived query method syntax is identical.
+public interface StoryRepository extends MongoRepository&lt;Story, String&gt; {
+    List&lt;Story&gt; findByUserIdOrderByCreatedAtDesc(Long userId);
+    long countByUserIdAndCreatedAtAfter(Long userId, Instant since);
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Don't pick MongoDB just because it's "modern" — if your data is genuinely relational (orders referencing users referencing addresses, with joins everywhere), JPA + MySQL/PostgreSQL remains the better fit. MongoDB shines specifically when documents are self-contained and their shape varies.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 21 ================= -->
+  <section class="chapter" id="c21">
+    <div class="chap-part-label">Part 7 — Data Store Options</div>
+    <div class="chap-head">
+      <div class="chap-num">21</div>
+      <div>
+        <div class="chap-title">Redis as a Primary Data Store</div>
+        <p class="chap-sub">Not just a cache — a fast key-value store with built-in expiry.</p>
+      </div>
+    </div>
+    <div class="plain-box">Chapter 13 used Redis behind <code>@Cacheable</code>, where the database is still the source of truth and Redis just holds copies. But Redis also works as the <b>actual home</b> for a category of data: short-lived, high-churn values like sessions, OTP codes, presence status, and rate-limit counters. This data has two defining traits — it changes constantly, and it's worthless after a short time — which is exactly what Redis's in-memory speed and native TTL (time-to-live) expiry are built for. Writing it to MySQL would mean constant writes to disk for data you'll delete in seconds anyway.</div>
+    <div class="app-scenario whatsapp">
+      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — online presence</div>
+      <p>Open a chat and you see "online" or "last seen at 4:32 PM." Behind that, every connected phone sends a heartbeat every few seconds. With hundreds of millions of users doing this simultaneously, storing presence in a SQL table would mean an enormous, pointless write load — and stale rows whenever a phone loses signal in a tunnel without saying goodbye.</p>
+      <p>The Redis version is elegant: each heartbeat sets a key with a 30-second TTL. As long as heartbeats keep arriving, the key keeps getting refreshed and the user shows "online." The moment heartbeats stop — battery died, network dropped, app killed — the key silently expires on its own, and the user flips to "last seen." No cleanup job, no stale state, ever.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class PresenceService {
+
+    private final StringRedisTemplate redisTemplate;
+
+    public PresenceService(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
+    // Called on every heartbeat from the phone (every ~10 seconds).
+    public void markOnline(String userId) {
+        redisTemplate.opsForValue()
+                .set("presence:" + userId, "online", Duration.ofSeconds(30));
+        // TTL is the whole trick: if heartbeats stop, the key deletes itself.
+        // Disconnection handling requires zero code.
+    }
+
+    public boolean isOnline(String userId) {
+        return redisTemplate.hasKey("presence:" + userId);
+    }
+
+    // Bonus: an atomic counter, another classic "Redis as a store" use case --
+    // e.g. counting failed login attempts before locking an account.
+    public long recordFailedLogin(String userId) {
+        String key = "failed-logins:" + userId;
+        Long attempts = redisTemplate.opsForValue().increment(key);
+        redisTemplate.expire(key, Duration.ofMinutes(15));
+        return attempts;
+    }
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Redis is in-memory: a restart without persistence configured wipes everything. That's fine for presence and OTPs (they'd expire anyway) — but never let "we already have Redis" tempt you into storing data you can't afford to lose, like orders, without understanding Redis persistence (RDB/AOF) first.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 22 ================= -->
+  <section class="chapter" id="c22">
+    <div class="chap-part-label">Part 7 — Data Store Options</div>
+    <div class="chap-head">
+      <div class="chap-num">22</div>
+      <div>
+        <div class="chap-title">Wide-Column NoSQL — Cassandra</div>
+        <p class="chap-sub">Built for massive write throughput across many servers.</p>
+      </div>
+    </div>
+    <div class="plain-box">A single MySQL server eventually hits a ceiling on how many writes per second it can absorb — and scaling relational writes across machines is genuinely hard. Cassandra was designed the other way around: it's a cluster of equal nodes with <b>no single leader</b>, where data is spread across nodes by a <b>partition key</b>, so writes scale almost linearly as you add machines. The trade-off is real: you give up joins, flexible ad-hoc queries, and strong consistency by default. You design each table around exactly the query you'll run against it — query-first design — rather than normalizing data and querying it however you like later.</div>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — view counters</div>
+      <p>A viral video receives tens of thousands of "count this view" writes per second, from every continent at once. Against a single relational row, those writes would queue up behind one row lock — the hotter the video, the worse the contention, precisely when you can least afford it.</p>
+      <p>In Cassandra, the video ID is the partition key, so each video's writes land on a specific set of nodes, and different viral videos hit different nodes — the load spreads across the cluster instead of piling onto one row. This is the same reason Cassandra-family databases sit behind Netflix's viewing history and Discord's message storage: brutal, sustained write volume.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Table("view_counts")
+public class ViewCount {
+
+    // The partition key decides WHICH NODES own this row.
+    // All writes for one video go to the same partition -- and different
+    // videos map to different nodes, spreading the total load.
+    @PrimaryKey
+    private String videoId;
+
+    private long count;
+}
+
+public interface ViewCountRepository extends CassandraRepository&lt;ViewCount, String&gt; {
+
+    // Queries MUST go through the partition key. This works:
+    Optional&lt;ViewCount&gt; findByVideoId(String videoId);
+
+    // But "find all videos with count > 1M" (no partition key) would need a
+    // full cluster scan -- Cassandra rejects it by default. If you need that
+    // query, you design a SECOND table shaped around it. Query-first design.
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>The interview-ready one-liner: choose Cassandra when writes dominate and you know your queries up front; choose a relational database when you need flexible queries, joins, and transactions. If someone asks "why not just MySQL?" — the answer is write scalability without a single point of contention.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 23 ================= -->
+  <section class="chapter" id="c23">
+    <div class="chap-part-label">Part 7 — Data Store Options</div>
+    <div class="chap-head">
+      <div class="chap-num">23</div>
+      <div>
+        <div class="chap-title">Search Engines — Elasticsearch</div>
+        <p class="chap-sub">Full-text, typo-tolerant search that a SQL "LIKE" can't match.</p>
+      </div>
+    </div>
+    <div class="plain-box">SQL's <code>LIKE '%headphones%'</code> does substring matching: it can't rank results by relevance, can't forgive a typo, can't understand that "running shoes" and "shoe for running" mean the same thing — and on a large table it's slow, because it can't use a normal index. Elasticsearch solves this with an <b>inverted index</b>: at write time, text is broken into analyzed terms, and each term maps to the documents containing it — like the index at the back of a book. Searches become fast term lookups with relevance scoring, fuzzy matching for typos, and stemming built in. The standard architecture: your primary database stays the source of truth, and you sync searchable fields into Elasticsearch.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — product search</div>
+      <p>A customer types "wireles headphnes" — two typos — into the search bar. They still expect to see "Sony Wireless Headphones" at the top, ranked by relevance and popularity, with results appearing as fast as they can type. A <code>LIKE</code> query returns nothing (the typo breaks the substring match), and even without typos it can't decide which of 4,000 matching products deserves the first slot.</p>
+      <p>Elasticsearch's analyzed index matches despite the typos (fuzzy matching), scores each product by how well it matches, and returns the ranked page in milliseconds — across a catalog of hundreds of millions of items. This is also what powers search at scale in apps like LinkedIn, Uber Eats, and Netflix's title search.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">// This document lives in an Elasticsearch INDEX -- typically synced from the
+// primary product database (via events or a pipeline), not written directly.
+@Document(indexName = "products")
+public class ProductDoc {
+    @Id private String id;
+
+    @Field(type = FieldType.Text)      // Text = analyzed for full-text search
+    private String name;
+
+    @Field(type = FieldType.Text)
+    private String description;
+
+    @Field(type = FieldType.Double)    // used for sorting/boosting, not full-text
+    private double rating;
+}
+
+public interface ProductSearchRepository extends ElasticsearchRepository&lt;ProductDoc, String&gt; {
+    // Full-text search across name and description -- analyzed, ranked, fast.
+    List&lt;ProductDoc&gt; findByNameContainingOrDescriptionContaining(String name, String description);
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Elasticsearch is not a primary database — it's eventually consistent, and losing an index should always be recoverable by re-syncing from the source of truth. Keep products in MySQL/PostgreSQL, mirror the searchable fields into Elasticsearch, and treat the index as rebuildable.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 24 ================= -->
+  <section class="chapter" id="c24">
+    <div class="chap-part-label">Part 7 — Data Store Options</div>
+    <div class="chap-head">
+      <div class="chap-num">24</div>
+      <div>
+        <div class="chap-title">Choosing a Cache Provider</div>
+        <p class="chap-sub">Caffeine, Redis, and Ehcache solve the same problem at different scales.</p>
+      </div>
+    </div>
+    <div class="plain-box">The <code>@Cacheable</code> annotation from Chapter 13 is provider-agnostic — what actually stores the cached values is the <code>CacheManager</code> bean, and that's where the real decision lives. <b>Caffeine</b> keeps entries in the JVM heap: nanosecond reads, zero network hops, but each app instance has its own private copy. <b>Redis</b> keeps entries in a shared external server: one cache for all instances, survives app restarts, at the cost of a ~1ms network round trip. <b>Ehcache</b> sits between, adding disk overflow to in-memory caching. The decision rule: one instance → Caffeine; multiple instances that must see the same cached data → Redis; many teams run both as two tiers (check Caffeine first, then Redis, then the database).</div>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — same cache, wrong provider</div>
+      <p>Imagine video metadata cached with Caffeine across 20 server instances. A creator fixes a typo in their title — the instance that handled the edit evicts its local entry, but the other 19 instances keep serving the stale title from their own private caches for the rest of the TTL. Viewers see different titles depending on which server they hit.</p>
+      <p>Switch the <code>CacheManager</code> to Redis and there's exactly one cached copy shared by all 20 instances: one eviction, everyone consistent. The service code with <code>@Cacheable</code> doesn't change by a single character.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">// Option A: Caffeine -- blazing fast, but private to each instance.
+@Bean
+public CacheManager caffeineCacheManager() {
+    CaffeineCacheManager manager = new CaffeineCacheManager();
+    manager.setCaffeine(Caffeine.newBuilder()
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .maximumSize(10_000));          // bound it -- unbounded caches eat the heap
+    return manager;
+}
+
+// Option B: Redis -- one shared cache for every instance. Same @Cacheable code.
+@Bean
+public CacheManager redisCacheManager(RedisConnectionFactory factory) {
+    RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMinutes(10));
+    return RedisCacheManager.builder(factory).cacheDefaults(config).build();
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Always set both a TTL and a maximum size on in-memory caches. An unbounded Caffeine cache is a slow-motion memory leak — it grows until the JVM starts long GC pauses, and the "cache" becomes the reason the service is slow.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 25 ================= -->
+  <section class="chapter" id="c25">
+    <div class="chap-part-label">Part 7 — Data Store Options</div>
+    <div class="chap-head">
+      <div class="chap-num">25</div>
+      <div>
+        <div class="chap-title">Databases on AWS</div>
+        <p class="chap-sub">Managed SQL, NoSQL, and cache — Spring Boot just points at an endpoint.</p>
+      </div>
+    </div>
+    <div class="plain-box">"Managed" means AWS runs the database server for you — provisioning, patching, backups, failover, and read replicas become configuration checkboxes instead of your team's 3 AM problem. The mapping to what you already know: <b>RDS</b> is managed MySQL/PostgreSQL and <b>Aurora</b> is AWS's faster, more available flavor of the same — your JPA code from Chapter 6 is unchanged, only the JDBC URL differs. <b>DynamoDB</b> is AWS's serverless NoSQL store — conceptually close to the Cassandra chapter (partition-key access, huge scale) but with zero cluster to operate and pay-per-request pricing. <b>ElastiCache</b> is managed Redis — Chapters 13, 21, and 24 apply as-is, pointed at an AWS endpoint.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon-style architecture on AWS</div>
+      <p>A typical e-commerce deployment uses all three at once, each where it fits: orders and payments in Aurora MySQL (they're relational and transactional — money needs ACID), shopping carts in DynamoDB (simple key access by cart ID, huge scale, and a built-in TTL that silently expires abandoned carts after 30 days), and session/cache data in ElastiCache Redis.</p>
+      <p>The Spring Boot code barely knows it's on AWS: the JPA repositories, the Redis template, the repository pattern — all identical to local development. What changes is the endpoint in configuration, injected per environment using the profiles from Chapter 8.</p>
+    </div>
+    <pre class="language-yaml"><code class="language-yaml"># application-prod.yml -- Aurora MySQL. The JPA entities and repositories
+# from Chapter 6 are completely unchanged; only this URL differs from dev.
+spring:
+  datasource:
+    url: jdbc:mysql://amazon-orders.cluster-xyz.us-east-1.rds.amazonaws.com:3306/orders
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: amazon-cache.abc123.use1.cache.amazonaws.com   # ElastiCache endpoint
+      port: 6379</code></pre>
+    <pre class="language-java"><code class="language-java">// DynamoDB via the AWS SDK v2 Enhanced Client: cart lookups by partition key,
+// with a TTL attribute so abandoned carts expire without a cleanup job.
+@DynamoDbBean
+public class CartItem {
+    private String cartId;    // partition key
+    private String sku;
+    private int quantity;
+    private long expiresAt;   // DynamoDB TTL deletes the item automatically
+
+    @DynamoDbPartitionKey
+    public String getCartId() { return cartId; }
+    // remaining getters/setters omitted
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>The interview framing for "which AWS database?": relational + transactions → RDS/Aurora; key-value at scale with known access patterns → DynamoDB; caching/sessions → ElastiCache; full-text search → OpenSearch (AWS's Elasticsearch). Pick per workload — real systems mix them, exactly like the scenario above.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 26 ================= -->
+  <section class="chapter" id="c26">
+    <div class="chap-part-label">Part 7 — Data Store Options</div>
+    <div class="chap-head">
+      <div class="chap-num">26</div>
+      <div>
+        <div class="chap-title">Databases on Azure</div>
+        <p class="chap-sub">Azure's managed equivalents, wired up the same Spring Boot way.</p>
+      </div>
+    </div>
+    <div class="plain-box">Azure mirrors the AWS lineup almost one-to-one, so the mental model transfers directly: <b>Azure SQL Database</b> is managed SQL Server and <b>Azure Database for MySQL/PostgreSQL</b> covers the open-source engines — again, JPA code unchanged, connection string swapped. <b>Cosmos DB</b> is Azure's flagship NoSQL store, notable for being multi-model (document, key-value, graph, even a Cassandra-compatible API) and for turnkey global distribution — replicate your data to five regions with a checkbox. <b>Azure Cache for Redis</b> is managed Redis. The <code>spring-cloud-azure</code> starters handle authentication and wiring, keeping the code cloud-agnostic.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Global e-commerce on Azure</div>
+      <p>An e-commerce platform serving India, Europe, and the US keeps orders in Azure SQL (relational, transactional) but puts the product catalog in Cosmos DB with multi-region replication — a shopper in Pune reads the catalog from an Indian region at single-digit-millisecond latency, while a shopper in Berlin reads a local European replica of the same data.</p>
+      <p>Writes made in one region replicate to the others automatically, with a consistency level you choose per workload (strong for inventory counts, "session" consistency for browsing). That kind of global read latency is exactly the problem Cosmos DB was built to solve — and why Microsoft's own Teams and Xbox services run on it.</p>
+    </div>
+    <pre class="language-yaml"><code class="language-yaml"># application-prod.yml -- Azure SQL for orders, Cosmos DB for the catalog
+spring:
+  datasource:
+    url: jdbc:sqlserver://shop-prod.database.windows.net:1433;database=orders
+    username: ${AZURE_DB_USER}
+    password: ${AZURE_DB_PASSWORD}
+  cloud:
+    azure:
+      cosmos:
+        endpoint: https://shop-catalog.documents.azure.com:443/
+        key: ${COSMOS_KEY}
+        database: catalog</code></pre>
+    <pre class="language-java"><code class="language-java">// Spring Data Cosmos -- the same repository pattern for the fourth time
+// (JPA, Mongo, Cassandra, now Cosmos). Learn it once, apply it everywhere.
+@Container(containerName = "products")
+public class ProductDoc {
+    @Id private String id;
+    @PartitionKey private String category;   // Cosmos also partitions for scale
+    private String name;
+    private double price;
+}
+
+public interface ProductCosmosRepository extends CosmosRepository&lt;ProductDoc, String&gt; {
+    List&lt;ProductDoc&gt; findByCategory(String category);
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Notice the pattern across this whole part: Spring Data gives every store — JPA, MongoDB, Cassandra, Elasticsearch, Cosmos — the same repository abstraction. Interviewers love the follow-up "how hard is it to switch stores?" The honest answer: the repository code barely changes; the data modeling (partition keys, denormalization, consistency) is the real work.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 27 ================= -->
+  <section class="chapter" id="c27">
+    <div class="chap-part-label">Part 8 — Resiliency</div>
+    <div class="chap-head">
+      <div class="chap-num">27</div>
+      <div>
+        <div class="chap-title">Circuit Breaker — Resilience4j</div>
+        <p class="chap-sub">Stop hammering a dependency that's already failing.</p>
+      </div>
+    </div>
+    <div class="plain-box">When a dependency starts failing, the naive behavior — keep calling it — makes everything worse: your threads pile up waiting on timeouts, your users wait, and the struggling dependency gets buried under even more load it can't handle. A circuit breaker works like the electrical one in your house. It watches the failure rate through a sliding window of recent calls. Below the threshold, the circuit is <b>CLOSED</b> and calls flow normally. Cross the threshold and it <b>OPENS</b>: calls fail instantly (or route to a fallback) without touching the dependency at all, giving it room to recover. After a cool-down it goes <b>HALF-OPEN</b>, letting a few trial calls through — success closes the circuit, failure re-opens it.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — third-party payment gateway degrades</div>
+      <p>The external payment gateway starts timing out at 10 seconds per call during a traffic spike on their side. Without a breaker, every checkout thread on every Amazon server spends 10 seconds stuck waiting — the thread pool drains, and soon even browsing (which doesn't touch payments at all) is slow, because there are no threads left to serve it. One sick dependency has taken down the whole storefront. This exact failure mode — cascading failure — is why Netflix built Hystrix, the ancestor of Resilience4j.</p>
+      <p>With the breaker: after the failure rate crosses 50%, the circuit opens. Checkouts instantly get the fallback — "order accepted, payment processing, we'll email you" — the order is queued for retry, threads stay free, and the gateway gets breathing room to recover. Sixty seconds later, the half-open trial calls find it healthy and normal payments resume, all without anyone paging the on-call engineer.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class PaymentGatewayClient {
+
+    @CircuitBreaker(name = "paymentGateway", fallbackMethod = "paymentFallback")
+    public PaymentResult charge(BigDecimal amount) {
+        return restClient.post().uri("https://gateway/charge")
+                .body(amount).retrieve().body(PaymentResult.class);
+    }
+
+    // Runs when the circuit is OPEN (no call attempted) or the call throws.
+    // Signature: same params as the original, plus the Throwable.
+    private PaymentResult paymentFallback(BigDecimal amount, Throwable ex) {
+        return PaymentResult.queuedForRetry();  // degrade gracefully, don't hard-fail
+    }
+}</code></pre>
+    <pre class="language-yaml"><code class="language-yaml"># application.yml -- the numbers that define "unhealthy"
+resilience4j:
+  circuitbreaker:
+    instances:
+      paymentGateway:
+        sliding-window-size: 20            # judge on the last 20 calls
+        failure-rate-threshold: 50         # open at >= 50% failures
+        wait-duration-in-open-state: 60s   # cool-down before trying again
+        permitted-number-of-calls-in-half-open-state: 3</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>A fallback that silently returns fake data can be worse than an error — imagine a fallback returning "0 items in stock" and the UI showing everything sold out. Design fallbacks to degrade honestly: queue the work, show cached data marked as possibly stale, or tell the user to retry.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 28 ================= -->
+  <section class="chapter" id="c28">
+    <div class="chap-part-label">Part 8 — Resiliency</div>
+    <div class="chap-head">
+      <div class="chap-num">28</div>
+      <div>
+        <div class="chap-title">Retry with Backoff</div>
+        <p class="chap-sub">Transient failures deserve another try, not an instant error.</p>
+      </div>
+    </div>
+    <div class="plain-box">In distributed systems, many failures are <b>transient</b>: a dropped packet, a node mid-restart, a one-second network blip. Failing the whole user operation over something that would succeed 200ms later is wasteful — so you retry. But retrying <i>immediately</i> is dangerous: if a service hiccups and a thousand callers all instantly retry, they hit it again at the exact same moment, in a synchronized wave that can knock it right back down (a retry storm). <b>Exponential backoff</b> spaces attempts out — 1s, 2s, 4s — and adding <b>jitter</b> (randomness) de-synchronizes the callers. Two rules: only retry errors that might actually resolve (timeouts yes, "invalid card number" no), and only retry operations that are safe to run twice (idempotent).</div>
+    <div class="app-scenario whatsapp">
+      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — delivery to a phone on a flaky network</div>
+      <p>A recipient is on a train drifting between cell towers. The first delivery attempt hits a dead zone and fails with a connection error. Marking the message "failed" over that would be absurd — the phone will be reachable again in seconds.</p>
+      <p>So delivery retries: wait 1 second, try again; still failing, wait 2; then 4. Three attempts covers the vast majority of brief network blips. Only when all attempts are exhausted does the system change strategy — the <code>@Recover</code> method hands the message to the offline-delivery queue, where it waits for the phone's next reconnect. Notice the escalation: retry handles the blip, the recover path handles the genuinely offline case, and the sender never sees either.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class MessageDeliveryService {
+
+    @Retryable(
+        retryFor = ConnectException.class,     // ONLY transient errors -- never retry
+        maxAttempts = 3,                        // business errors like "user blocked you"
+        backoff = @Backoff(delay = 1000, multiplier = 2)   // 1s -> 2s -> 4s
+    )
+    public void deliver(Message message, String deviceId) {
+        deviceClient.push(deviceId, message);
+    }
+
+    // Runs only after ALL 3 attempts have failed -- the escalation path.
+    @Recover
+    public void onDeliveryFailed(ConnectException ex, Message message, String deviceId) {
+        offlineQueue.enqueue(message, deviceId);   // deliver when the phone reconnects
+    }
+}
+// Requires @EnableRetry on a configuration class.</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Retrying a non-idempotent operation is how customers get charged twice: the charge succeeds but the <i>response</i> is lost, the client retries, and a second charge goes through. Fix it with an idempotency key — the client sends a unique ID per logical operation, and the server ignores duplicates of an ID it has already processed.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 29 ================= -->
+  <section class="chapter" id="c29">
+    <div class="chap-part-label">Part 8 — Resiliency</div>
+    <div class="chap-head">
+      <div class="chap-num">29</div>
+      <div>
+        <div class="chap-title">Rate Limiter</div>
+        <p class="chap-sub">Cap how often a piece of code can run in a given window.</p>
+      </div>
+    </div>
+    <div class="plain-box">A rate limiter enforces a budget: at most N calls per time window, with excess calls rejected immediately (typically HTTP 429 "Too Many Requests") or briefly queued. It protects in two directions. <b>Inbound</b>: your public API caps each client so one buggy integration or scraper can't consume capacity meant for everyone. <b>Outbound</b>: when a partner API allows you 100 calls/minute, limiting yourself prevents them from banning you. Note the contrast with the circuit breaker: a breaker reacts to <i>failures</i>, a rate limiter enforces a budget on <i>volume</i> even when everything is perfectly healthy.</div>
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — public API per-developer limit</div>
+      <p>Thousands of third-party apps — schedulers, analytics dashboards, print services — call Instagram's public API. One developer ships a bug: a polling loop with no delay, hammering the profile endpoint hundreds of times per second. Without limits, that single API key degrades the platform for every other integration and for Instagram's own apps.</p>
+      <p>With a 200-calls-per-minute limit per key, the buggy app burns its own budget in the first second and gets clean 429 responses (with a "retry after" header) for the rest of the minute. Every other developer's app is completely unaffected — the blast radius of the bug is contained to the developer who wrote it.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@RestController
+@RequestMapping("/api/public")
+public class PublicApiController {
+
+    @RateLimiter(name = "publicApi", fallbackMethod = "tooManyRequests")
+    @GetMapping("/profile/{username}")
+    public ResponseEntity&lt;ProfileResponse&gt; getProfile(@PathVariable String username) {
+        return ResponseEntity.ok(profileService.getPublicProfile(username));
+    }
+
+    private ResponseEntity&lt;ProfileResponse&gt; tooManyRequests(String username, Throwable ex) {
+        return ResponseEntity.status(429)
+                .header("Retry-After", "60")     // tell well-behaved clients when to come back
+                .build();
+    }
+}</code></pre>
+    <pre class="language-yaml"><code class="language-yaml">resilience4j:
+  ratelimiter:
+    instances:
+      publicApi:
+        limit-for-period: 200        # 200 calls...
+        limit-refresh-period: 60s    # ...per rolling 60-second window
+        timeout-duration: 0          # reject instantly instead of queueing</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Resilience4j's limiter counts per app instance — 10 instances × 200 = 2,000 effective calls per key. For a true global limit across instances, keep the counters in something shared, like Redis (Chapter 21's atomic <code>increment</code> plus TTL is exactly a distributed rate limiter), or enforce it at the API Gateway (Chapter 36), which sees all traffic in one place.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 30 ================= -->
+  <section class="chapter" id="c30">
+    <div class="chap-part-label">Part 8 — Resiliency</div>
+    <div class="chap-head">
+      <div class="chap-num">30</div>
+      <div>
+        <div class="chap-title">Bulkhead &amp; Timeout</div>
+        <p class="chap-sub">Isolate failures so one slow dependency can't sink the whole app.</p>
+      </div>
+    </div>
+    <div class="plain-box">The name comes from shipbuilding: bulkheads divide a hull into watertight compartments so one breach floods a section, not the ship. In a service, the "hull" is your finite pool of request threads, and the flooding is slowness — a slow dependency causes calls to it to occupy threads for seconds instead of milliseconds, and without isolation those stuck threads are stolen from everything else the service does. A <b>bulkhead</b> caps how many concurrent calls one dependency may hold; a <b>timeout</b> caps how long any single call may take. Together they put a hard ceiling on the damage: at most N threads, for at most T seconds each.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — recommendations slow down, checkout must not</div>
+      <p>The product page calls the recommendations service for "customers also bought." Recommendations is nice-to-have; checkout is the business. One afternoon recommendations degrades — responses go from 50ms to 8 seconds. Do the math without protection: 200 request threads, each product-page render holding one for 8 seconds, and within a minute nearly the whole pool is stuck waiting on shelf-decoration while checkout requests queue behind them. Revenue stops because a widget got slow.</p>
+      <p>With a bulkhead of 10 and a 2-second timeout: at most 10 threads can ever be waiting on recommendations, and each gives up after 2 seconds. The other 190 threads keep serving checkout and search untouched. The product page quietly renders without the recommendations strip — a degradation most customers never even notice.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class RecommendationClient {
+
+    @Bulkhead(name = "recommendations")      // cap concurrent calls to this dependency
+    @TimeLimiter(name = "recommendations")   // cap the duration of each call
+    public CompletableFuture&lt;List&lt;Product&gt;&gt; getRecommendations(String userId) {
+        return CompletableFuture.supplyAsync(() -> recommendationApi.fetch(userId));
+    }
+}</code></pre>
+    <pre class="language-yaml"><code class="language-yaml">resilience4j:
+  bulkhead:
+    instances:
+      recommendations:
+        max-concurrent-calls: 10     # worst case: 10 threads tied up, never more
+  timelimiter:
+    instances:
+      recommendations:
+        timeout-duration: 2s         # worst case: tied up for 2s, never more</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>These patterns compose — production clients often stack <code>@Bulkhead</code> + <code>@TimeLimiter</code> + <code>@CircuitBreaker</code> + <code>@Retry</code> on one method. The layering: timeout bounds each call, bulkhead bounds concurrency, retry handles blips, and the breaker steps back when failures persist. Size timeouts from the dependency's real p99 latency plus headroom, not a guess.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 31 ================= -->
+  <section class="chapter" id="c31">
+    <div class="chap-part-label">Part 8 — Resiliency</div>
+    <div class="chap-head">
+      <div class="chap-num">31</div>
+      <div>
+        <div class="chap-title">Distributed Transactions — Saga Pattern</div>
+        <p class="chap-sub">@Transactional only works within one database — sagas coordinate across services.</p>
+      </div>
+    </div>
+    <div class="plain-box">Chapter 12's <code>@Transactional</code> rests on one database's ability to roll back everything it did. Split order, inventory, and payment into separate microservices with separate databases and that guarantee evaporates — no single transaction can span them. A <b>saga</b> replaces the rollback with explicit business logic: a sequence of local transactions, where every step has a defined <b>compensating action</b> that undoes it (reserve stock ↔ release stock, charge card ↔ refund). If step 3 fails, the saga runs the compensations for steps 2 and 1 in reverse. Two coordination styles exist: <b>orchestration</b> (one service directs the sequence — easier to follow and debug) and <b>choreography</b> (services react to each other's events — more decoupled, harder to trace).</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — an order across three services</div>
+      <p>Order-service asks inventory-service to reserve the last PlayStation, then asks payment-service to charge ₹49,990 — and the card is declined. The reservation already committed in inventory's own database; no shared transaction exists to undo it. Without compensation, that console is now locked "reserved" forever: unsellable, attached to no successful order — inventory silently leaking with every failed payment.</p>
+      <p>The saga makes the undo explicit: on payment failure, the orchestrator calls <code>releaseStock</code>, inventory returns to sellable, and the order is marked failed. The key mental shift — embrace that the system is <i>briefly inconsistent</i> (a few hundred milliseconds where stock is reserved but payment is undecided) and guarantee it always <i>converges</i> to a consistent state, forward or backward.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class OrderSagaOrchestrator {
+
+    public Order placeOrder(OrderRequest request) {
+        // Step 1: local transaction inside inventory-service
+        inventoryClient.reserveStock(request.sku(), request.qty());
+
+        try {
+            // Step 2: local transaction inside payment-service
+            paymentClient.charge(request.orderId(), request.amount());
+        } catch (PaymentFailedException ex) {
+            // COMPENSATE step 1 -- the explicit "undo" that replaces rollback
+            inventoryClient.releaseStock(request.sku(), request.qty());
+            throw ex;
+        }
+
+        // Step 3: commit the order locally
+        return orderRepository.save(Order.confirmed(request));
+    }
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>What if the orchestrator crashes between charging and compensating? Production sagas persist their progress (commonly via the <b>outbox pattern</b> — writing state and outgoing messages in one local transaction) so a restarted instance can resume or compensate. Compensations must also be idempotent: releasing the same reservation twice must be harmless.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 32 ================= -->
+  <section class="chapter" id="c32">
+    <div class="chap-part-label">Part 9 — Messaging &amp; Real-Time</div>
+    <div class="chap-head">
+      <div class="chap-num">32</div>
+      <div>
+        <div class="chap-title">Kafka Integration</div>
+        <p class="chap-sub">A durable, ordered log that decouples producers from consumers.</p>
+      </div>
+    </div>
+    <div class="plain-box">Direct service-to-service calls create tight coupling: the caller must know who to call, wait for them, and handle their downtime. Kafka breaks that by putting a durable <b>log</b> in the middle. Producers append messages to a <b>topic</b> and move on — they neither know nor care who reads it. Consumers read at their own pace, and because messages persist on disk (for days, by your retention policy), a consumer that crashes resumes exactly where it left off instead of losing anything. Topics are split into <b>partitions</b> for parallelism, and messages with the same key always land in the same partition — which guarantees their order relative to each other. Separate <b>consumer groups</b> each get every message independently, which is what makes fan-out effortless.</div>
+    <div class="app-scenario whatsapp">
+      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — one sent message, three consumers</div>
+      <p>When you hit send, at least three things must happen: the message reaches the recipient's device, a push notification fires if their app is backgrounded, and the message lands in chat backup. Chaining these as direct calls would make sending as slow as the slowest step — and if the backup service is down, does sending fail entirely?</p>
+      <p>With Kafka, send-service publishes once to <code>chat-messages</code>, keyed by chat ID so each conversation's messages stay in order, and returns instantly. Three consumer groups — delivery, notifications, backup — each read the same message independently. When backup goes down for 20 minutes, deliveries and notifications continue untouched; backup restarts, finds its saved position in the log, and works through the backlog. Nothing lost, nobody blocked, no coordination between the three teams that own those consumers.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class MessagePublisher {
+
+    private final KafkaTemplate&lt;String, ChatMessage&gt; kafkaTemplate;
+
+    public MessagePublisher(KafkaTemplate&lt;String, ChatMessage&gt; kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    public void publish(ChatMessage message) {
+        // Key = chatId: all messages of one chat share a partition,
+        // so their ORDER within that chat is guaranteed.
+        kafkaTemplate.send("chat-messages", message.getChatId(), message);
+        // returns immediately -- no waiting on any consumer
+    }
+}
+
+// Different groupIds = independent consumers. Each group receives EVERY
+// message and tracks its own reading position (offset) in the log.
+@Component
+public class DeliveryConsumer {
+    @KafkaListener(topics = "chat-messages", groupId = "delivery-service")
+    public void onMessage(ChatMessage message) {
+        deviceClient.push(message);
+    }
+}
+
+@Component
+public class BackupConsumer {
+    @KafkaListener(topics = "chat-messages", groupId = "backup-service")
+    public void onMessage(ChatMessage message) {
+        backupStore.append(message);   // down for 20 min? resumes from its offset
+    }
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Kafka's default guarantee is <i>at-least-once</i>: after a consumer crash mid-batch, some messages get redelivered. Design consumers to be idempotent — e.g. keying the backup store by message ID so a duplicate append is a harmless overwrite — rather than assuming exactly-once out of the box.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 33 ================= -->
+  <section class="chapter" id="c33">
+    <div class="chap-part-label">Part 9 — Messaging &amp; Real-Time</div>
+    <div class="chap-head">
+      <div class="chap-num">33</div>
+      <div>
+        <div class="chap-title">RabbitMQ Integration</div>
+        <p class="chap-sub">Queue-based messaging with flexible routing rules.</p>
+      </div>
+    </div>
+    <div class="plain-box">RabbitMQ's model differs from Kafka's in a way that matters for choosing between them. Producers publish to an <b>exchange</b> with a <b>routing key</b>; the exchange routes each message into one or more <b>queues</b> based on binding rules; and each message in a queue is delivered to exactly <b>one</b> of that queue's workers, then acknowledged and gone. That "each message consumed once, by one worker" semantic makes RabbitMQ a natural <b>work queue</b>: pile up jobs, let a pool of workers share them, scale workers up when the queue grows. The rough rule of thumb: RabbitMQ for distributing jobs among workers with rich routing; Kafka for a replayable event log that many independent systems read.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — order confirmation emails</div>
+      <p>Checkout must respond in milliseconds; sending a templated confirmation email takes a couple of seconds and involves a third-party email provider that occasionally has a bad day. Doing it inline would make every customer wait on the slowest part — and couple checkout availability to the email provider's uptime.</p>
+      <p>So checkout publishes <code>order.created</code> to the order exchange and responds immediately. The message routes into the email queue, where a pool of five workers consumes it — each order's email handled by exactly one worker, never duplicated. During Diwali sales the queue deepens, the team scales to twenty workers, and the backlog drains; if the email provider goes down entirely, messages simply wait in the queue and every email still goes out once it recovers. Failed messages can be retried or shunted to a dead-letter queue for inspection.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class OrderService {
+
+    private final RabbitTemplate rabbitTemplate;
+
+    public OrderService(RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+    }
+
+    public void placeOrder(Order order) {
+        orderRepository.save(order);
+        // exchange + routing key -- bindings decide which queues receive it.
+        // "order.#" bindings could also feed an analytics queue, a fraud queue...
+        rabbitTemplate.convertAndSend("order-exchange", "order.created", order);
+        // checkout responds to the customer NOW; email happens on its own time
+    }
+}
+
+@Component
+public class OrderEmailWorker {
+    // Five instances of this worker share the queue -- RabbitMQ delivers each
+    // message to exactly one of them. Scaling = just add more workers.
+    @RabbitListener(queues = "order-email-queue", concurrency = "5")
+    public void onOrderCreated(Order order) {
+        emailService.sendConfirmation(order);   // ack on success; requeue/DLQ on failure
+    }
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Always configure a <b>dead-letter queue</b>: a message that keeps failing (say, a malformed address crashing the worker) would otherwise be redelivered forever, jamming the queue. After N failed attempts it moves to the DLQ, where the team can inspect and replay it — one poison message never blocks the other ten thousand.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 34 ================= -->
+  <section class="chapter" id="c34">
+    <div class="chap-part-label">Part 9 — Messaging &amp; Real-Time</div>
+    <div class="chap-head">
+      <div class="chap-num">34</div>
+      <div>
+        <div class="chap-title">WebSocket / STOMP</div>
+        <p class="chap-sub">A persistent, two-way connection for instant updates.</p>
+      </div>
+    </div>
+    <div class="plain-box">Plain HTTP is one-directional: the client asks, the server answers, the connection closes. For live features that's backwards — the <i>server</i> knows when something happened, but has no way to tell anyone. Polling ("anything new?" every 2 seconds) fakes it, at the cost of constant wasted requests and up to 2 seconds of built-in lag. A <b>WebSocket</b> upgrades one HTTP request into a persistent, two-way channel: either side can push data the instant it exists. <b>STOMP</b> layers a tiny pub/sub protocol on top — clients subscribe to topics like <code>/topic/chat/42</code>, and the server broadcasts to every subscriber — so you're not inventing your own message format over a raw socket.</div>
+    <div class="app-scenario whatsapp">
+      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — the typing indicator</div>
+      <p>"Rahul is typing…" is only worth showing if it appears within a fraction of a second of Rahul actually typing. Polling can't get there: even at an aggressive 1-second interval you'd average half a second of lag while generating a relentless stream of mostly-empty responses from millions of idle chats — the worst of both worlds.</p>
+      <p>Over WebSockets, each open chat holds a live connection. Rahul's phone sends one tiny frame to <code>/app/typing/chat42</code>; the server broadcasts it to <code>/topic/typing/chat42</code>; everyone viewing that chat renders "typing…" within milliseconds. Total network cost: one frame in, one frame out per subscriber — only when someone actually types. The same channel carries message delivery, read receipts (blue ticks), and presence updates.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws-chat").withSockJS();  // clients connect here once
+    }
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic");               // server -> subscribers
+        registry.setApplicationDestinationPrefixes("/app");  // client -> @MessageMapping
+    }
+}
+
+@Controller
+public class TypingController {
+
+    // Client SENDS to /app/typing/chat42; return value is BROADCAST to
+    // every client subscribed to /topic/typing/chat42. That's the whole flow.
+    @MessageMapping("/typing/{chatId}")
+    @SendTo("/topic/typing/{chatId}")
+    public TypingEvent onTyping(@DestinationVariable String chatId, TypingEvent event) {
+        return event;
+    }
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>The built-in simple broker lives in one JVM — with multiple app instances, a user connected to instance A never hears broadcasts originating on instance B. In production, back STOMP with an external broker (RabbitMQ's STOMP plugin, or Redis pub/sub) so every instance shares the same topics.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 35 ================= -->
+  <section class="chapter" id="c35">
+    <div class="chap-part-label">Part 10 — Microservices &amp; Cloud</div>
+    <div class="chap-head">
+      <div class="chap-num">35</div>
+      <div>
+        <div class="chap-title">Service Discovery — Eureka</div>
+        <p class="chap-sub">Services find each other by name, not hard-coded IPs.</p>
+      </div>
+    </div>
+    <div class="plain-box">In a container world, IP addresses are disposable: instances scale from 3 to 30 during a sale, crash and get replaced, and every replacement gets a fresh address. Hard-coding "inventory-service lives at 10.0.4.17" breaks by lunchtime. A <b>service registry</b> fixes this with three moves: each instance <b>registers</b> itself by logical name on startup ("I'm inventory-service at this address"), sends <b>heartbeats</b> so dead instances fall out of the registry automatically, and callers <b>look up</b> a current healthy instance by name at call time — with client-side load balancing spreading requests across whatever instances exist right now. Eureka (from Netflix) is the classic Spring Cloud implementation; Kubernetes provides the same idea natively through Services and DNS.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — checkout finds inventory during a sale</div>
+      <p>At 9 AM, inventory-service runs 3 instances. The Great Indian Festival sale starts at noon; autoscaling pushes it to 30 instances, each on an address that didn't exist this morning. By midnight it's back to 3, and overnight one of those crashes and is replaced. Any hard-coded address list is wrong within hours — and updating config on every caller for every scaling event is madness.</p>
+      <p>With Eureka, none of that churn is checkout-service's problem. Every inventory instance registers on boot and heartbeats every 30 seconds; instances that die simply stop heartbeating and are evicted. Checkout asks for "inventory-service" by name and gets load-balanced across whatever healthy instances exist at that instant — 3 at breakfast, 30 at noon, without a single configuration change anywhere.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">// On each inventory-service instance: register with Eureka at startup.
+@SpringBootApplication
+@EnableDiscoveryClient
+public class InventoryServiceApplication { }
+
+// On the caller: @LoadBalanced teaches the client to resolve logical names
+// via Eureka and spread calls across healthy instances (round-robin).
+@Configuration
+public class HttpClientConfig {
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+
+@Service
+public class CheckoutClient {
+    private final RestTemplate restTemplate;
+
+    public CheckoutClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public boolean reserveStock(String sku, int qty) {
+        // "inventory-service" is a LOGICAL name, not a host --
+        // resolved to a live instance at the moment of each call.
+        return restTemplate.postForObject(
+            "http://inventory-service/api/reserve",
+            new ReserveRequest(sku, qty), Boolean.class);
+    }
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Interview nuance: on Kubernetes you usually don't run Eureka — the platform's built-in Service + DNS discovery does the same job (<code>http://inventory-service</code> just resolves). Eureka matters when you're off Kubernetes, or need client-side load-balancing decisions the platform doesn't make for you.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 36 ================= -->
+  <section class="chapter" id="c36">
+    <div class="chap-part-label">Part 10 — Microservices &amp; Cloud</div>
+    <div class="chap-head">
+      <div class="chap-num">36</div>
+      <div>
+        <div class="chap-title">API Gateway — Spring Cloud Gateway</div>
+        <p class="chap-sub">One front door that routes to every microservice behind it.</p>
+      </div>
+    </div>
+    <div class="plain-box">Exposing 40 microservices directly to the internet creates two problems: clients must know 40 addresses, and every cross-cutting concern — authentication, rate limiting, TLS, logging — must be implemented 40 times, identically, forever. A gateway is the single entry point that fixes both: clients see one host, the gateway matches each request against route <b>predicates</b> (path, header, method) and forwards to the right internal service, applying shared <b>filters</b> — validate the JWT, enforce rate limits, strip prefixes, log — exactly once, in one place. Internal services then live on a private network, unreachable except through the gateway.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — one host, forty services</div>
+      <p>The mobile app talks only to <code>api.amazon.com</code>. Behind that host, <code>/products/**</code> lands on product-service, <code>/orders/**</code> on order-service, <code>/cart/**</code> on cart-service — the app has no idea these are separate systems, which means the backend team can split, merge, or rewrite services freely without ever shipping an app update.</p>
+      <p>The gateway is also where platform-wide policy lives: every request's JWT is validated once at the door (services behind it trust the gateway's verdict), per-customer rate limits are enforced where all traffic converges, and when the team migrates reviews out of product-service into a new reviews-service, it's a one-line route change at the gateway — invisible to every client in the world.</p>
+    </div>
+    <pre class="language-yaml"><code class="language-yaml">spring:
+  cloud:
+    gateway:
+      routes:
+        - id: products-route
+          uri: lb://product-service        # lb:// = resolve via discovery + load-balance
+          predicates:
+            - Path=/products/**
+        - id: orders-route
+          uri: lb://order-service
+          predicates:
+            - Path=/orders/**
+          filters:
+            - StripPrefix=1                 # /orders/123 -> /123 inside the service
+      default-filters:
+        - name: RequestRateLimiter          # enforced once, at the front door,
+          args:                             # for every route behind the gateway
+            redis-rate-limiter.replenishRate: 100
+            redis-rate-limiter.burstCapacity: 200</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>The gateway is on every request's path — it must be the most boring, stateless, horizontally-scaled thing you run. Teams that let business logic creep into gateway filters ("just this one order-enrichment step...") end up with a fragile god-service that every deploy risks. Route, authenticate, limit, log — and keep business logic in the services.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 37 ================= -->
+  <section class="chapter" id="c37">
+    <div class="chap-part-label">Part 10 — Microservices &amp; Cloud</div>
+    <div class="chap-head">
+      <div class="chap-num">37</div>
+      <div>
+        <div class="chap-title">Centralized Config — Spring Cloud Config</div>
+        <p class="chap-sub">One place to change a setting across every running instance.</p>
+      </div>
+    </div>
+    <div class="plain-box">Chapter 8's profiles solve per-environment config for one service — but with 40 services each carrying their own <code>application.yml</code>, shared settings drift and every change means a rebuild-and-redeploy. Spring Cloud Config centralizes it: a <b>Config Server</b> serves configuration out of a Git repository, each service fetches its own settings (by app name + profile) at startup, and beans marked <code>@RefreshScope</code> can pick up changes <b>live</b> — no restart. Git as the backing store is the quiet superpower: every config change is a commit, with an author, a diff, a review, and an instant <code>git revert</code> when a change goes wrong.</div>
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — feature flag on the new feed ranking</div>
+      <p>The team ships a new feed-ranking algorithm dark — deployed but disabled behind a flag. Enabling it for a small slice of users must be instant, and disabling it must be even faster if engagement metrics dip. Redeploying 200 feed-service instances to flip a boolean would take twenty minutes each way — an eternity when the feed is misbehaving in production.</p>
+      <p>With central config, the flag lives in one Git file. Enabling: commit <code>rollout-percent: 5</code>, trigger a refresh, and all 200 instances flip within seconds. When metrics look wrong at 2 AM, rollback is <code>git revert</code> + refresh — feed back to the old algorithm in under a minute, full audit trail of who changed what and when included for free.</p>
+    </div>
+    <pre class="language-yaml"><code class="language-yaml"># In the CONFIG GIT REPO: feed-service.yml -- one file governs all instances
+feed:
+  new-ranking-algorithm:
+    enabled: true
+    rollout-percent: 5
+
+# In feed-service itself: just one line pointing at the Config Server
+# application.yml:
+#   spring.config.import: configserver:http://config-server:8888</code></pre>
+    <pre class="language-java"><code class="language-java">@RefreshScope   // re-reads its @Value fields on refresh -- no restart needed
+@Component
+public class FeedRankingConfig {
+
+    @Value("${feed.new-ranking-algorithm.enabled:false}")
+    private boolean newRankingEnabled;
+
+    @Value("${feed.new-ranking-algorithm.rollout-percent:0}")
+    private int rolloutPercent;
+
+    public boolean useNewRanking(Long userId) {
+        return newRankingEnabled && (userId % 100) &lt; rolloutPercent;
+    }
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Refreshing 200 instances one by one via <code>/actuator/refresh</code> doesn't scale — pair the Config Server with <b>Spring Cloud Bus</b> (backed by Kafka or RabbitMQ) so a single refresh event fans out to every instance at once.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 38 ================= -->
+  <section class="chapter" id="c38">
+    <div class="chap-part-label">Part 10 — Microservices &amp; Cloud</div>
+    <div class="chap-head">
+      <div class="chap-num">38</div>
+      <div>
+        <div class="chap-title">Declarative REST Clients — OpenFeign</div>
+        <p class="chap-sub">Call another service like a local method — no manual HTTP plumbing.</p>
+      </div>
+    </div>
+    <div class="plain-box">Every hand-rolled <code>RestTemplate</code> call repeats the same ceremony: build the URL, set headers, serialize the body, deserialize the response, translate errors. Feign inverts it — you write only an <b>interface</b> describing the remote API in the same annotations you'd use on a controller (<code>@PostMapping</code>, <code>@RequestBody</code>), and Feign generates the entire HTTP client implementation at startup. Point it at a Eureka logical name and load balancing comes along free; wire in Resilience4j and the circuit breakers from Chapter 27 wrap every call. The calling code reads like it's calling a local service — which is exactly the point.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — checkout's clients, before and after</div>
+      <p>Checkout-service calls inventory, payment, and shipping. As RestTemplate code, that's three families of URL-building, header-setting, error-mapping boilerplate — subtly inconsistent with each other, each drifting as the remote APIs evolve, none of it business logic.</p>
+      <p>As Feign clients, each remote API is one small interface that reads like documentation: method, path, request, response. <code>CheckoutService</code> injects them like any local bean and calls <code>inventoryClient.reserveStock(...)</code> — the fact that a network hop, service discovery lookup, load-balancing decision, and JSON round-trip happen behind that line is entirely Feign's business.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">// The ENTIRE client. No implementation class exists anywhere -- Feign
+// generates it at startup from these annotations.
+@FeignClient(name = "inventory-service")   // logical name -> Eureka + load balancing
+public interface InventoryClient {
+
+    @PostMapping("/api/reserve")
+    boolean reserveStock(@RequestBody ReserveRequest request);
+
+    @GetMapping("/api/stock/{sku}")
+    StockLevel getStock(@PathVariable("sku") String sku);
+}
+
+@Service
+public class CheckoutService {
+
+    private final InventoryClient inventoryClient;   // injected like any local bean
+
+    public CheckoutService(InventoryClient inventoryClient) {
+        this.inventoryClient = inventoryClient;
+    }
+
+    public void checkout(String sku, int qty) {
+        // Reads like a local call; is actually discovery + LB + HTTP + JSON.
+        if (!inventoryClient.reserveStock(new ReserveRequest(sku, qty))) {
+            throw new OutOfStockException(sku);
+        }
+    }
+}
+// Requires @EnableFeignClients on a configuration class.</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>The convenience is also the danger: a Feign call <i>looks</i> local but can be slow, can fail, and crosses a network. Never call it in a tight loop (that's N network round trips), and always pair Feign with the timeouts and circuit breakers from Part 8 — an unprotected Feign client inherits every failure mode of Chapter 27's opening scenario.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 39 ================= -->
+  <section class="chapter" id="c39">
+    <div class="chap-part-label">Part 11 — Observability</div>
+    <div class="chap-head">
+      <div class="chap-num">39</div>
+      <div>
+        <div class="chap-title">Distributed Tracing</div>
+        <p class="chap-sub">Follow one request as it hops across every microservice it touches.</p>
+      </div>
+    </div>
+    <div class="plain-box">In a monolith, one stack trace tells the whole story of a slow request. Split the work across six services and that story shatters into six unconnected log files. Tracing reconnects it: when a request first enters the system, it's assigned a <b>trace ID</b>, and that ID rides along in a header through every HTTP call and Kafka message the request triggers. Each unit of work (a controller handling, a client call, a DB query) records a <b>span</b> — its name, duration, and parent — and a backend like Zipkin or Jaeger assembles all spans sharing a trace ID into one waterfall diagram of the request's entire journey. Micrometer Tracing does the propagation automatically for Spring's HTTP clients, Kafka, and logging; you mostly just add the dependency.</div>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — "uploads are slow," but where?</div>
+      <p>Users report uploads taking 6 seconds. The request path: gateway → upload-service → transcoding-service → storage-service, plus a metadata write. Without tracing, diagnosis is archaeology — four teams grepping four log systems, trying to match timestamps, each concluding "our part looks fine."</p>
+      <p>With tracing, an engineer pulls up one slow trace in Zipkin and reads the waterfall: gateway 3ms, upload-service 40ms, transcoding submit 25ms... and there it is — storage-service's span shows 5.4 seconds, and its child span reveals why: an internal retry loop hitting a misconfigured bucket region three times before succeeding. Diagnosis in minutes, the right team paged, and the trace ID printed in every log line means the matching logs across all four services are one search away.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">// build.gradle -- this pair is most of the work:
+// implementation 'io.micrometer:micrometer-tracing-bridge-brave'   // creates/propagates traces
+// implementation 'io.zipkin.reporter2:zipkin-reporter-brave'       // ships them to Zipkin
+
+@RestController
+public class UploadController {
+
+    private static final Logger log = LoggerFactory.getLogger(UploadController.class);
+
+    @PostMapping("/api/videos/upload")
+    public UploadResponse upload(@RequestBody UploadRequest request) {
+        // This log line automatically includes [app,traceId,spanId] --
+        // the SAME traceId appears in transcoding-service's and
+        // storage-service's logs for this request. Correlation for free.
+        log.info("starting upload for {}", request.title());
+
+        return transcodingClient.submit(request);
+        // The outgoing call carries the trace ID in headers automatically --
+        // no manual propagation code anywhere.
+    }
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Production systems <b>sample</b> — tracing every request at high volume is costly, so typically ~10% of traces are kept (plus, ideally, everything that errored). Set it via <code>management.tracing.sampling.probability: 0.1</code>. For debugging a specific issue, you can temporarily raise it.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 40 ================= -->
+  <section class="chapter" id="c40">
+    <div class="chap-part-label">Part 11 — Observability</div>
+    <div class="chap-head">
+      <div class="chap-num">40</div>
+      <div>
+        <div class="chap-title">Metrics &amp; Dashboards</div>
+        <p class="chap-sub">Turn app behavior into numbers a dashboard can graph and alert on.</p>
+      </div>
+    </div>
+    <div class="plain-box">Tracing explains one request; <b>metrics</b> summarize all of them — request rates, error percentages, latency percentiles, queue depths — as cheap numeric time series you can graph and, crucially, <b>alert</b> on. The pipeline: Micrometer is the metrics API inside your app (think "SLF4J, but for metrics"), Actuator exposes everything at <code>/actuator/prometheus</code>, Prometheus scrapes that endpoint every few seconds and stores the history, Grafana graphs it, and Alertmanager pages a human when a threshold breaks. Spring Boot auto-instruments a lot (every HTTP endpoint's rate and latency, JVM memory, connection pools) — the skill is adding the <b>business</b> metrics that generic instrumentation can't know about.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — catching a silent checkout failure</div>
+      <p>A bad deploy at 14:00 makes one payment provider integration start failing — but only for that provider, roughly 8% of checkouts. No exception storm, servers healthy, HTTP dashboards green: the failures return well-formed error responses. Generic infrastructure metrics literally cannot see this problem.</p>
+      <p>The business metric can. <code>checkout.failures</code>, tagged by failure reason and provider, jumps from ~2/minute to 40/minute at 14:01. The Grafana alert fires by 14:03, the on-call engineer sees the spike is isolated to one provider tag, correlates it with the 14:00 deploy, and rolls back — total customer impact, a few minutes. Without that one counter, the first signal would have been angry customers hours later.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Service
+public class CheckoutService {
+
+    private final MeterRegistry registry;
+
+    public CheckoutService(MeterRegistry registry) {
+        this.registry = registry;
+    }
+
+    public void checkout(Order order) {
+        // Timer: counts calls AND tracks latency percentiles (p95, p99)
+        Timer.Sample sample = Timer.start(registry);
+        try {
+            processCheckout(order);
+        } catch (PaymentException ex) {
+            // Tags turn one counter into a sliceable dashboard dimension:
+            // failures BY reason, BY provider -- that's what located the bug.
+            registry.counter("checkout.failures",
+                    "reason", ex.getReason(),
+                    "provider", order.getPaymentProvider()).increment();
+            throw ex;
+        } finally {
+            sample.stop(registry.timer("checkout.duration"));
+        }
+    }
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Never use an unbounded value (user ID, order ID) as a tag — each distinct tag value creates a separate time series, and a million users means a million series: a "cardinality explosion" that takes down Prometheus itself. Tag with small, fixed sets: reason, provider, region, status.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 41 ================= -->
+  <section class="chapter" id="c41">
+    <div class="chap-part-label">Part 12 — Security Extras</div>
+    <div class="chap-head">
+      <div class="chap-num">41</div>
+      <div>
+        <div class="chap-title">OAuth2 / JWT Authentication</div>
+        <p class="chap-sub">Stateless login: the token itself proves who you are.</p>
+      </div>
+    </div>
+    <div class="plain-box">Session-based auth stores login state on the server and hands the browser a cookie pointing at it — fine for one server, awkward for twenty microservices that would all need access to a shared session store. A <b>JWT</b> (JSON Web Token) flips the model: after login, the auth server issues a token containing the user's identity and claims (ID, roles, expiry), <b>cryptographically signed</b>. The client sends it as a bearer header on every request, and any service can verify the signature with the auth server's public key and trust the claims — no session store, no call back to the auth server, no shared state. That self-contained verification is what makes JWTs the default currency of microservice authentication. OAuth2 is the surrounding protocol standardizing how tokens are issued and refreshed (and how "Log in with Google" works).</div>
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — one login, twenty services</div>
+      <p>You log in once on your phone. Over the next hour, the app talks to the feed service, profile service, DM service, notification service — separate deployments, separate teams, separate databases. With sessions, every one of them would need to check a shared session store on every request: a bottleneck and a single point of failure touched by all traffic.</p>
+      <p>With JWT, login returns a signed token asserting "user 8271, expires in 15 minutes." Each service verifies the signature locally — a fast cryptographic check, no network call — and proceeds. The DM service never asks the auth service "is this session valid?"; the token's signature already answers it. A refresh token quietly obtains new access tokens so the user isn't re-prompted every 15 minutes.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">// AUTH SERVICE: verify credentials, issue the signed token.
+@RestController
+public class AuthController {
+
+    @PostMapping("/api/auth/login")
+    public TokenResponse login(@RequestBody LoginRequest request) {
+        User user = authService.authenticate(request);   // check password
+        String jwt = jwtService.generateToken(user.getId(), user.getRoles(),
+                                              Duration.ofMinutes(15));
+        return new TokenResponse(jwt);
+    }
+}
+
+// EVERY OTHER SERVICE: three lines of config = "verify JWTs, trust their claims."
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().authenticated())
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        return http.build();
+        // Signature verified locally against the auth server's public key
+        // (fetched once from its JWKS endpoint). No per-request network call.
+    }
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>A JWT can't be un-issued — it stays valid until expiry even if the user logs out or is banned. That's why access tokens are kept <b>short-lived</b> (minutes), with refresh tokens (which <i>can</i> be revoked server-side) obtaining new ones. Long-lived access tokens turn one leaked header into a long-term compromise.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 42 ================= -->
+  <section class="chapter" id="c42">
+    <div class="chap-part-label">Part 12 — Security Extras</div>
+    <div class="chap-head">
+      <div class="chap-num">42</div>
+      <div>
+        <div class="chap-title">CORS Configuration</div>
+        <p class="chap-sub">Tell browsers exactly which other origins may call your API.</p>
+      </div>
+    </div>
+    <div class="plain-box">Browsers enforce the <b>same-origin policy</b>: JavaScript on <code>site-a.com</code> can't read responses from <code>api.site-b.com</code> unless site-b explicitly allows it. This isn't the browser being difficult — it's what stops a malicious page you accidentally opened from silently calling your bank's API with your logged-in cookies. <b>CORS</b> (Cross-Origin Resource Sharing) is the server's allowlist: response headers declaring which origins, methods, and headers are permitted. For non-trivial requests the browser first sends a <b>preflight</b> — an <code>OPTIONS</code> request asking permission — and only proceeds if the server's CORS headers approve. The critical mental model: the error appears in the <i>frontend console</i>, but the fix is always on the <i>backend</i>.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — seller dashboard blocked by the browser</div>
+      <p>The seller dashboard is a React app on <code>seller.amazon.com</code>; the product API lives on <code>api.amazon.com</code> — different subdomains, therefore different origins. The frontend team deploys, opens the dashboard, and every API call fails with the console error every developer eventually meets: <i>"blocked by CORS policy: No 'Access-Control-Allow-Origin' header."</i> Confusingly, the same API works perfectly from Postman — because Postman isn't a browser and enforces no same-origin policy.</p>
+      <p>The fix is one backend config class: allow origin <code>https://seller.amazon.com</code>, the needed methods, and the <code>Authorization</code> header (the dashboard sends JWTs from Chapter 41). Preflights now succeed, and — importantly — a malicious <code>evil-shop.com</code> still gets blocked, because it's not on the allowlist. CORS didn't get disabled; it got configured.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Configuration
+public class CorsConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOrigins("https://seller.amazon.com")   // exact allowlist -- not "*"
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
+                .allowedHeaders("Authorization", "Content-Type")
+                .maxAge(3600);   // cache the preflight verdict for an hour
+    }
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b><code>allowedOrigins("*")</code> is the tempting "make the error go away" fix — and it invites any website on the internet to call your API from its users' browsers. Worse, wildcard + credentials is forbidden by the spec entirely. List your real origins explicitly; in Spring Security setups, also ensure CORS is enabled in the filter chain or preflights get rejected before your config is consulted.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 43 ================= -->
+  <section class="chapter" id="c43">
+    <div class="chap-part-label">Part 13 — Batch &amp; Files</div>
+    <div class="chap-head">
+      <div class="chap-num">43</div>
+      <div>
+        <div class="chap-title">Spring Batch</div>
+        <p class="chap-sub">Process millions of records reliably, with restart-from-failure built in.</p>
+      </div>
+    </div>
+    <div class="plain-box">A naive "loop over all rows" job has three famous failure modes: it loads too much into memory, a crash at record 4.7 million loses all progress, and rerunning it double-processes everything before the crash. Spring Batch is the framework answer. Work is structured as a <b>Job</b> of <b>Steps</b>, each step a <b>read → process → write</b> loop over <b>chunks</b> — read 1,000 items, process them, write them, commit, repeat — so memory stays flat and progress commits incrementally. The <b>JobRepository</b> persists execution state in database tables: which job ran, with which parameters, how far each step got. That's the superpower — a failed job <i>restarts from the last committed chunk</i>, not from zero.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — nightly seller payouts, crash included</div>
+      <p>Every night, a job aggregates the day's millions of order rows into payout records for hundreds of thousands of sellers — money, so correctness is non-negotiable: no seller skipped, none paid twice. At 2:47 AM, four million records in, the database fails over and the job dies.</p>
+      <p>With Spring Batch, the night shift's response is one command: restart the job. The JobRepository knows exactly which chunks committed, the step resumes from chunk 4,000, and the already-written payouts are neither redone nor duplicated. The 8 AM payout deadline is met. A hand-rolled loop would have meant a very different morning: forensic SQL to figure out who was already paid, and a hand-edited rerun script — with real money riding on getting it right.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@Bean
+public Job payoutReportJob(JobRepository jobRepository, Step calculatePayoutsStep) {
+    return new JobBuilder("payoutReportJob", jobRepository)
+            .start(calculatePayoutsStep)      // real jobs chain multiple steps
+            .build();
+}
+
+@Bean
+public Step calculatePayoutsStep(JobRepository jobRepository,
+                                  PlatformTransactionManager tx,
+                                  ItemReader&lt;Order&gt; orderReader,          // pages from the DB
+                                  ItemProcessor&lt;Order, Payout&gt; processor, // order -> payout
+                                  ItemWriter&lt;Payout&gt; payoutWriter) {      // bulk insert
+    return new StepBuilder("calculatePayoutsStep", jobRepository)
+            .&lt;Order, Payout&gt;chunk(1000, tx)   // read/process/write, commit every 1000
+            .reader(orderReader)               // <- restart resumes from the last
+            .processor(processor)              //    committed chunk, automatically
+            .writer(payoutWriter)
+            .build();
+}</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Job parameters (like the run date) identify a job <i>instance</i> — rerunning with the same parameters means "resume that instance," a new date means "new run." Trigger nightly execution with Chapter 15's <code>@Scheduled</code>, passing today's date as the parameter: scheduling starts the job, Batch guarantees its integrity.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 44 ================= -->
+  <section class="chapter" id="c44">
+    <div class="chap-part-label">Part 13 — Batch &amp; Files</div>
+    <div class="chap-head">
+      <div class="chap-num">44</div>
+      <div>
+        <div class="chap-title">File Upload Handling</div>
+        <p class="chap-sub">Accepting large binary files without loading them entirely into memory.</p>
+      </div>
+    </div>
+    <div class="plain-box">HTTP sends files as <code>multipart/form-data</code> — the request body carries one or more file "parts" alongside regular form fields. Spring's <code>MultipartFile</code> hands each part to your controller, and its most important method is <code>getInputStream()</code>: it lets you <b>stream</b> the bytes onward (to disk, to S3) without ever materializing the whole file in heap memory. The other essential is centrally-configured size limits, enforced by the framework <i>before</i> your code runs — the difference between "a too-large upload gets a clean 413 response" and "a too-large upload takes down the JVM."</div>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — a 4 GB video meets a 2 GB heap</div>
+      <p>A creator uploads a 4 GB video to a service instance running with a 2 GB heap. If the handler naively calls <code>file.getBytes()</code> — the whole file as one byte array — the math doesn't work: OutOfMemoryError, instance dead, and every other creator's in-flight upload on that instance dies with it. Two concurrent large uploads would kill it even faster.</p>
+      <p>The streaming version never holds more than a small buffer: bytes flow from the network socket through the input stream into object storage in chunks, heap usage flat regardless of file size — ten simultaneous 4 GB uploads are fine. The 5 GB configured cap rejects oversized requests up front with a clean error, and the controller returns quickly by kicking off transcoding asynchronously (Chapter 14's <code>@Async</code>) instead of making the creator's browser wait on processing.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">@RestController
+@RequestMapping("/api/videos")
+public class VideoUploadController {
+
+    private final StorageService storageService;
+    private final TranscodingService transcodingService;
+
+    public VideoUploadController(StorageService storageService,
+                                  TranscodingService transcodingService) {
+        this.storageService = storageService;
+        this.transcodingService = transcodingService;
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity&lt;UploadResponse&gt; upload(@RequestParam("file") MultipartFile file)
+            throws IOException {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // STREAM to storage -- never file.getBytes() for large files.
+        // Heap holds only a small buffer, whatever the file size.
+        String storedPath = storageService.store(
+                file.getInputStream(), file.getOriginalFilename(), file.getSize());
+
+        transcodingService.transcodeAsync(storedPath);   // @Async -- don't block the upload
+
+        return ResponseEntity.ok(new UploadResponse(storedPath));
+    }
+}</code></pre>
+    <pre class="language-yaml"><code class="language-yaml"># Enforced by the framework BEFORE your controller runs --
+# an oversized request gets a clean 413, not an OutOfMemoryError.
+spring:
+  servlet:
+    multipart:
+      max-file-size: 5GB
+      max-request-size: 5GB</code></pre>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>At real scale, big files often skip your server entirely: the API returns a <b>pre-signed URL</b> and the client uploads straight to S3/GCS, so your service handles metadata while the storage provider handles the bytes. Know both patterns — "when would you use pre-signed URLs?" is a favorite interview follow-up.</div></div>
+  </section>
+
+  <!-- ================= CHAPTER 45 ================= -->
+  <section class="chapter" id="c45">
+    <div class="chap-part-label">Part 14 — API Docs</div>
+    <div class="chap-head">
+      <div class="chap-num">45</div>
+      <div>
+        <div class="chap-title">OpenAPI / Swagger</div>
+        <p class="chap-sub">Interactive, always-up-to-date API documentation generated from your code.</p>
+      </div>
+    </div>
+    <div class="plain-box">Hand-written API docs share a destiny: they drift. Someone renames a field, adds a parameter, changes a status code — the wiki page doesn't hear about it, and consumers integrate against documentation that's quietly wrong. <b>OpenAPI</b> fixes the incentive problem by generating the spec <i>from the code itself</i>: springdoc scans your controllers, request/response types, and validation annotations at runtime and produces a machine-readable spec plus <b>Swagger UI</b> — a browsable page where every endpoint can be tried live, right from the browser. The spec being machine-readable is the second win: consumers can <b>generate typed client SDKs</b> from it instead of hand-writing HTTP calls against prose.</div>
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — the Marketplace API and ten thousand sellers</div>
+      <p>External sellers and tool vendors integrate against Amazon's Marketplace API. At that scale, documentation quality is support-ticket volume: every ambiguity — "is this field required?", "what does a 409 mean here?" — turns into thousands of identical questions. And a hand-maintained doc for hundreds of evolving endpoints would be permanently, somewhere, wrong.</p>
+      <p>Generated docs can't drift: when a developer adds a <code>fulfillmentType</code> parameter, the spec updates the moment the code deploys, because the code <i>is</i> the source. A seller's developer opens Swagger UI, reads the endpoint, tries a real call against sandbox with their token, sees the exact response shape — and then generates a typed Java or Python client from the spec instead of hand-rolling requests. The <code>@Operation</code> annotations layer human explanation on top of the auto-detected structure.</p>
+    </div>
+    <pre class="language-java"><code class="language-java">// build.gradle: implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.x'
+// That single dependency = /v3/api-docs (the spec) + /swagger-ui.html (the UI).
+
+@RestController
+@RequestMapping("/api/products")
+@Tag(name = "Products", description = "Marketplace product catalog operations")
+public class ProductController {
+
+    @Operation(
+        summary = "Get a single product by ID",
+        description = "Returns full product details. Requires the catalog:read scope."
+    )
+    @ApiResponse(responseCode = "200", description = "Product found")
+    @ApiResponse(responseCode = "404", description = "No product with this ID")
+    @GetMapping("/{id}")
+    public ResponseEntity&lt;ProductResponse&gt; getProduct(@PathVariable String id) {
+        return productService.findById(id)
+                .map(p -&gt; ResponseEntity.ok(ProductResponse.from(p)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+    // Validation annotations from Chapter 9 (@NotBlank, @Size) show up in the
+    // generated schema automatically -- consumers see the real constraints.
+}</code></pre>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Swagger UI on a production, internet-facing service is a free map of your entire attack surface. Expose it freely in dev and staging; in production, disable it (<code>springdoc.swagger-ui.enabled: false</code>) or lock it behind authentication — publish the spec to partners through a proper developer portal instead.</div></div>
+  </section>
+
+</main>
+</div>
+
+<footer>
+  Spring Boot Core Components — a study guide built with real scenarios from Amazon, Instagram, YouTube &amp; WhatsApp.
+</footer>
+
+<script>
+// ---- roadmap modal ----
+(function(){
+  const overlay = document.getElementById('roadmap-overlay');
+  const openBtn = document.getElementById('roadmap-toggle');
+  const closeBtn = document.getElementById('roadmap-close');
+
+  function openRoadmap(){ overlay.classList.add('open'); }
+  function closeRoadmap(){ overlay.classList.remove('open'); }
+
+  openBtn.addEventListener('click', openRoadmap);
+  closeBtn.addEventListener('click', closeRoadmap);
+
+  // click on the dark backdrop (not the modal card itself) closes it
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeRoadmap();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) closeRoadmap();
+  });
+
+  // clicking a chapter chip navigates via its #anchor and closes the modal
+  overlay.querySelectorAll('.roadmap-chip').forEach(chip => {
+    chip.addEventListener('click', closeRoadmap);
+  });
+})();
+
+// ---- dark mode toggle ----
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const root = document.documentElement;
+  const isDark = root.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    root.removeAttribute('data-theme');
+    localStorage.setItem('sbg-theme', 'light');
+  } else {
+    root.setAttribute('data-theme', 'dark');
+    localStorage.setItem('sbg-theme', 'dark');
+  }
+});
+
+// ---- reading progress bar ----
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  document.getElementById('progress').style.width = scrolled + '%';
+});
+
+// ---- active TOC link on scroll ----
+const chapters = document.querySelectorAll('.chapter, section#intro');
+const tocLinks = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      tocLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-15% 0px -75% 0px' });
+chapters.forEach(ch => observer.observe(ch));
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+</html>
