@@ -207,6 +207,10 @@ footer{max-width:1240px;margin:0 auto;padding:30px 20px 60px;text-align:center;c
   .chapter{padding:26px 20px}
   .hero{padding:28px 22px}
 }
+  .ann-table{width:100%;border-collapse:collapse;margin:14px 0 18px;font-size:14.5px}
+  .ann-table th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);text-align:left;padding:8px 10px;border-bottom:2px solid var(--ink)}
+  .ann-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .ann-table td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -549,46 +553,118 @@ public class AmazonCheckoutApplication {
     <div class="plain-box">Instead of a class creating its own dependencies with <code>new</code>, it just declares what it needs in its constructor. Spring's IoC (Inversion of Control) container builds every bean once at startup and injects the right instances wherever they're needed. You get loose coupling and classes that are trivial to test.</div>
 
     <div class="app-scenario amazon">
-      <div class="app-scenario-tag"><span class="dot"></span>Amazon — placing an order</div>
-      <p><code>OrderService</code> needs to charge a card and reduce stock. It doesn't know or care how <code>PaymentService</code> talks to the payment gateway, or how <code>InventoryService</code> talks to the warehouse database — it just asks for both in its constructor, and Spring supplies them.</p>
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — charging a customer at checkout</div>
+      <p><code>OrderService</code> needs to charge the customer through a payment gateway. Without DI, it would create that gateway itself with <code>new</code> — welding the class to one specific gateway forever.</p>
     </div>
 
-    <pre class="language-java"><code class="language-java">@Service
-public class PaymentService {
-    public void charge(String orderId, BigDecimal amount) {
-        // talks to the payment gateway
+    <pre class="language-java"><code class="language-java">// WITHOUT dependency injection — OrderService builds its own dependency
+public class OrderService {
+
+    private MmbaGateway gateway = new MmbaGateway();   // hardcoded, created here
+
+    public void placeOrder(String orderId, BigDecimal amount) {
+        gateway.charge(orderId, amount);
     }
+}
+// Problems:
+//  1. Switching gateways means editing OrderService's source code.
+//  2. Unit tests hit the REAL MmbaGateway — no way to substitute a fake.
+//  3. OrderService is tightly coupled to one concrete class.</code></pre>
+
+    <pre class="language-java"><code class="language-java">// WITH dependency injection — OrderService only knows an interface,
+// and Spring hands it a ready-made instance through the constructor.
+
+public interface PaymentGateway {
+    boolean charge(String orderId, BigDecimal amount);
 }
 
 @Service
-public class InventoryService {
-    public void reserveStock(String sku, int qty) {
-        // decrements warehouse stock
+public class MmbaGateway implements PaymentGateway {
+    public boolean charge(String orderId, BigDecimal amount) {
+        // talks to the MMBA payment gateway
+        return true;
     }
 }
 
 @Service
 public class OrderService {
 
-    private final PaymentService paymentService;
-    private final InventoryService inventoryService;
+    private final PaymentGateway gateway;
 
-    // Constructor injection: Spring sees this constructor, finds a
-    // PaymentService bean and an InventoryService bean, and passes them in.
-    // No "new PaymentService()" anywhere in this class.
-    public OrderService(PaymentService paymentService,
-                         InventoryService inventoryService) {
-        this.paymentService = paymentService;
-        this.inventoryService = inventoryService;
+    // Constructor injection: Spring finds the one PaymentGateway bean
+    // and passes it in. No "new MmbaGateway()" anywhere in this class.
+    public OrderService(PaymentGateway gateway) {
+        this.gateway = gateway;
     }
 
-    public void placeOrder(String orderId, String sku, int qty, BigDecimal amount) {
-        inventoryService.reserveStock(sku, qty);
-        paymentService.charge(orderId, amount);
+    public void placeOrder(String orderId, BigDecimal amount) {
+        gateway.charge(orderId, amount);
     }
 }</code></pre>
 
-    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Field injection (<code>@Autowired</code> directly on a field) works but hides a class's real dependencies and makes it hard to unit test without Spring. Constructor injection — as above — makes dependencies explicit and lets you build the class in a plain JUnit test with <code>new OrderService(mockPayment, mockInventory)</code>.</div></div>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Field injection (<code>@Autowired</code> directly on a field) works but hides a class's real dependencies and makes it hard to unit test without Spring. Constructor injection — as above — makes dependencies explicit and lets you build the class in a plain JUnit test with <code>new OrderService(fakeGateway)</code>.</div></div>
+
+    <div class="chap-sub" style="margin-top:28px;font-weight:600;color:var(--ink)">When two classes implement the same interface — which one gets injected?</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Amazon — checkout now supports three gateways</div>
+      <p>Amazon's checkout grows to support <b>MMBA</b>, <b>PhonePe</b>, and <b>Razorpay</b> — all implementing <code>PaymentGateway</code>. Spring now finds three matching beans for the one constructor parameter, and refuses to guess which one you meant.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Service
+public class MmbaGateway implements PaymentGateway { /* ... */ }
+
+@Service
+public class PhonePeGateway implements PaymentGateway { /* ... */ }
+
+@Service
+public class RazorpayGateway implements PaymentGateway { /* ... */ }
+
+// Starting the app now throws:
+// NoUniqueBeanDefinitionException: expected single matching bean but found 3:
+// mmbaGateway, phonePeGateway, razorpayGateway</code></pre>
+
+    <p style="margin:14px 0 8px">Two annotations resolve this, depending on what you're telling Spring:</p>
+
+    <pre class="language-java"><code class="language-java">// @Primary — "when nobody asks for a specific one, use ME as the default"
+@Service
+@Primary
+public class MmbaGateway implements PaymentGateway { /* ... */ }
+
+@Service
+public class PhonePeGateway implements PaymentGateway { /* ... */ }
+
+@Service
+public class RazorpayGateway implements PaymentGateway { /* ... */ }
+
+@Service
+public class OrderService {
+    public OrderService(PaymentGateway gateway) {   // no @Qualifier needed
+        this.gateway = gateway;                     // Spring injects MmbaGateway — it's @Primary
+    }
+}</code></pre>
+
+    <pre class="language-java"><code class="language-java">// @Qualifier — "I want THIS exact one, by name, not the default"
+@Service("mmba")
+public class MmbaGateway implements PaymentGateway { /* ... */ }
+
+@Service("phonepe")
+public class PhonePeGateway implements PaymentGateway { /* ... */ }
+
+@Service("razorpay")
+public class RazorpayGateway implements PaymentGateway { /* ... */ }
+
+@Service
+public class OrderService {
+
+    private final PaymentGateway gateway;
+
+    public OrderService(@Qualifier("razorpay") PaymentGateway gateway) {
+        this.gateway = gateway;                     // always Razorpay — resolved at startup
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Use <code>@Primary</code> when one implementation is the sensible default and the others are rare exceptions. Use <code>@Qualifier</code> when a class needs one <i>specific</i> implementation and there's no natural default. Both are resolved once at startup — if the gateway must be chosen per customer at checkout instead, that's a runtime decision, not a wiring decision, and calls for a different pattern (injecting a <code>Map&lt;String, PaymentGateway&gt;</code> keyed by bean name).</div></div>
   </section>
 
   <!-- ================= CHAPTER 3 ================= -->
@@ -602,36 +678,68 @@ public class OrderService {
       </div>
     </div>
 
-    <div class="plain-box">A "starter" is a bundle of dependencies for one feature (data access, security, web). Auto-configuration is Spring Boot inspecting what's on your classpath at startup and registering the beans that feature needs — only if you haven't already configured them yourself.</div>
+    <div class="plain-box"><b>What it is:</b> A "starter" is a single dependency that bundles everything needed for one feature. "Auto-configuration" is Spring Boot inspecting your classpath at startup and registering the beans that feature needs — but only if you haven't already defined them yourself.</div>
 
-    <div class="app-scenario instagram">
-      <div class="app-scenario-tag"><span class="dot"></span>Instagram — adding database support</div>
-      <p>A backend engineer wants Instagram's post service to save posts to MySQL. They add one line to <code>pom.xml</code>: <code>spring-boot-starter-data-jpa</code>. On startup, Boot detects a JPA implementation (Hibernate) and a JDBC driver on the classpath, and auto-configures a <code>DataSource</code>, an <code>EntityManagerFactory</code>, and a <code>PlatformTransactionManager</code> — nobody wrote that configuration by hand.</p>
+    <div class="plain-box"><b>Why it exists:</b> Before this, every team wired the same feature by hand — the same connection factory, the same template, the same manager beans — copy-pasted with small variations across every project that needed it. Auto-configuration removes that repeated boilerplate.</div>
+
+    <div class="plain-box"><b>How it works internally:</b> <code>@EnableAutoConfiguration</code> (bundled inside <code>@SpringBootApplication</code>) reads a plain text file at startup — <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code> — listing hundreds of candidate configuration classes shipped inside starter jars. Each candidate only activates if its <code>@Conditional</code> guard passes: <code>@ConditionalOnClass</code> checks a required library is actually on the classpath, and <code>@ConditionalOnMissingBean</code> checks you haven't already defined that bean yourself. If both pass, the auto-configuration registers its beans; if you've configured your own, it quietly backs off instead of conflicting.</div>
+
+    <div class="app-scenario amazon">
+      <div class="app-scenario-tag"><span class="dot"></span>Flipkart — caching product listings in Redis</div>
+      <p>Flipkart's <code>product-service</code> hits the database on every product-page view, and most reads are for the same popular products — the database becomes the bottleneck under load. The fix is a Redis cache in front of it.</p>
     </div>
 
-    <pre class="language-xml"><code class="language-xml">&lt;!-- pom.xml — this single starter pulls in Hibernate, HikariCP connection
-     pool, and Spring's JPA support, and triggers their auto-configuration --&gt;
-&lt;dependency&gt;
-    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-    &lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
-&lt;/dependency&gt;</code></pre>
-
-    <pre class="language-java"><code class="language-java">// A simplified version of what Spring Boot auto-configures behind the
-// scenes once it sees spring-boot-starter-data-jpa + a MySQL driver.
-// You never write this class yourself — @ConditionalOnClass triggers it.
-
+    <pre class="language-java"><code class="language-java">// WITHOUT the starter — hand-wire the connection, template, and cache manager
 @Configuration
-@ConditionalOnClass(EntityManagerFactory.class)     // only if JPA is on the classpath
-@ConditionalOnMissingBean(DataSource.class)          // only if YOU haven't defined one
-public class InstagramJpaAutoConfiguration {
+public class RedisConfig {
 
     @Bean
-    public DataSource dataSource(DataSourceProperties props) {
-        return props.initializeDataSourceBuilder().build();
+    public RedisConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory(
+                new RedisStandaloneConfiguration("localhost", 6379));
+    }
+
+    @Bean
+    public RedisTemplate&lt;String, Object&gt; redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate&lt;String, Object&gt; template = new RedisTemplate&lt;&gt;();
+        template.setConnectionFactory(factory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        return template;
+    }
+
+    @Bean
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(10));
+        return RedisCacheManager.builder(factory).cacheDefaults(config).build();
     }
 }</code></pre>
 
-    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>You can always see exactly what auto-configured and why: run with <code>--debug</code> and check the "CONDITIONS EVALUATION REPORT," or hit <code>/actuator/conditions</code> if Actuator is on the classpath.</div></div>
+    <pre class="language-xml"><code class="language-xml">&lt;!-- WITH the starter — one dependency replaces the entire class above --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-data-redis&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+
+    <pre class="language-java"><code class="language-java">// ProductService — just USE the auto-configured cache, nothing to wire
+@Service
+public class ProductService {
+
+    private final ProductRepository repository;
+
+    public ProductService(ProductRepository repository) {
+        this.repository = repository;
+    }
+
+    @Cacheable(value = "products", key = "#productId")   // reads from Redis after first call
+    public Product getProduct(String productId) {
+        return repository.findById(productId)
+                .orElseThrow(() -&gt; new ProductNotFoundException(productId));
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Run with <code>--debug</code> to print the "CONDITIONS EVALUATION REPORT" — it shows exactly which auto-configurations fired, and why the ones that didn't were skipped.</div></div>
   </section>
 
   <!-- ================= CHAPTER 4 ================= -->
@@ -704,50 +812,87 @@ public interface VideoRepository                //   Spring's DataAccessExceptio
       </div>
     </div>
 
-    <div class="plain-box">Spring MVC's <code>DispatcherServlet</code> receives every incoming HTTP request and routes it to the right method based on annotations like <code>@GetMapping</code> and <code>@PostMapping</code>. Method parameters are extracted from the URL, query string, or JSON body automatically — you write plain Java and get a REST API.</div>
+    <div class="plain-box"><b>What it is:</b> A REST Controller is a class that maps incoming HTTP requests — <code>GET /posts/42</code>, <code>POST /posts</code> — to Java methods, and returns data (usually JSON) instead of an HTML page.</div>
 
-    <div class="app-scenario amazon">
-      <div class="app-scenario-tag"><span class="dot"></span>Amazon — product catalog API</div>
-      <p>The product page needs to fetch one product by ID, and the search page needs to list products by category with pagination. Two endpoints, two annotated methods.</p>
+    <div class="plain-box"><b>How it works internally:</b> Spring's <code>DispatcherServlet</code> is the single entry point for every request. At startup, it scans all <code>@RestController</code> classes and builds a routing table — URL pattern + HTTP method → Java method. When a request arrives, it looks up the match, extracts parameters from the URL, query string, or JSON body, and invokes that method directly. You never touch servlets or HTTP parsing yourself.</div>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — the Post service</div>
+      <p>Viewing a post, scrolling the feed, uploading a photo, editing a caption, liking, and deleting — six different actions on the same resource, each needing its own route and its own way of reading input.</p>
     </div>
 
     <pre class="language-java"><code class="language-java">@RestController
-@RequestMapping("/api/products")
-public class ProductController {
+@RequestMapping("/api/posts")
+public class PostController {
 
-    private final ProductService productService;
+    private final PostService postService;
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
+    public PostController(PostService postService) {   // constructor injection (Ch 2)
+        this.postService = postService;
     }
 
-    // GET /api/products/B08N5WRWNW  -> {id} is pulled from the URL path
-    @GetMapping("/{id}")
-    public ResponseEntity&lt;ProductResponse&gt; getProduct(@PathVariable String id) {
-        return productService.findById(id)
-                .map(p -&gt; ResponseEntity.ok(ProductResponse.from(p)))
-                .orElse(ResponseEntity.notFound().build());
+    // GET /api/posts/42 — view a single post
+    @GetMapping("/{postId}")
+    public PostResponse getPost(@PathVariable Long postId) {
+        return postService.getPost(postId);
     }
 
-    // GET /api/products?category=electronics&amp;page=0&amp;size=20
-    @GetMapping
-    public Page&lt;ProductResponse&gt; listProducts(
-            @RequestParam String category,
+    // GET /api/posts/feed?page=0&amp;size=10 — Aisha's home feed, paginated
+    @GetMapping("/feed")
+    public List&lt;PostResponse&gt; getFeed(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return productService.findByCategory(category, PageRequest.of(page, size))
-                .map(ProductResponse::from);
+            @RequestParam(defaultValue = "10") int size) {
+        return postService.getFeed(page, size);
     }
 
-    // POST /api/products  with a JSON body -> deserialized into NewProductRequest
+    // POST /api/posts — Rahul uploads a new photo
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductResponse createProduct(@RequestBody NewProductRequest request) {
-        return ProductResponse.from(productService.create(request));
+    public PostResponse createPost(@Valid @RequestBody CreatePostRequest request) {
+        return postService.createPost(request);
+    }
+
+    // PUT /api/posts/42 — edit the caption
+    @PutMapping("/{postId}")
+    public PostResponse updateCaption(@PathVariable Long postId,
+                                       @RequestBody UpdateCaptionRequest request) {
+        return postService.updateCaption(postId, request.caption());
+    }
+
+    // POST /api/posts/42/like — Aisha likes Rahul's post
+    @PostMapping("/{postId}/like")
+    public void likePost(@PathVariable Long postId, Authentication auth) {
+        postService.like(postId, auth.getName());
+    }
+
+    // DELETE /api/posts/42 — remove a post
+    @DeleteMapping("/{postId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePost(@PathVariable Long postId) {
+        postService.delete(postId);
     }
 }</code></pre>
 
-    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>ResponseEntity</code> lets you control the exact HTTP status and headers (404 for a missing product), while a plain return type like <code>Page&lt;ProductResponse&gt;</code> always returns 200. Use <code>ResponseEntity</code> whenever the outcome can genuinely differ.</div></div>
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">The annotations used above, and when to reach for each</p>
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@RestController</td><td>Marks the class as a web controller whose return values go straight into the HTTP response body as JSON (combines @Controller + @ResponseBody).</td></tr>
+      <tr><td>@RequestMapping</td><td>Sets a base path shared by every method in the class — avoids repeating "/api/posts" on each endpoint.</td></tr>
+      <tr><td>@GetMapping</td><td>Read data — fetching a post, a feed, a profile. Should never change anything (safe to repeat).</td></tr>
+      <tr><td>@PostMapping</td><td>Create something new, or trigger an action with a side effect — uploading a post, liking, placing an order.</td></tr>
+      <tr><td>@PutMapping</td><td>Replace/update a resource in full — editing a post's full details.</td></tr>
+      <tr><td>@PatchMapping</td><td>Partially update a resource — e.g. just the caption, not the whole post.</td></tr>
+      <tr><td>@DeleteMapping</td><td>Remove a resource — deleting a post or comment.</td></tr>
+      <tr><td>@PathVariable</td><td>Pulls a value out of the URL path itself — the 42 in /posts/42. Used to identify WHICH resource.</td></tr>
+      <tr><td>@RequestParam</td><td>Pulls a value from the query string — ?page=0&amp;size=10. Used for filters, pagination, optional inputs.</td></tr>
+      <tr><td>@RequestBody</td><td>Deserializes the incoming JSON body into a Java object — used for POST/PUT/PATCH payloads.</td></tr>
+      <tr><td>@Valid</td><td>Triggers Bean Validation (@NotBlank, @Size, etc.) on the incoming @RequestBody object — rejects bad input before it reaches the service layer.</td></tr>
+      <tr><td>@ResponseStatus</td><td>Overrides the default 200 OK — 201 Created after a POST, 204 No Content after a DELETE.</td></tr>
+      <tr><td>@RequestHeader</td><td>Reads a specific HTTP header — e.g. @RequestHeader("Authorization") to read a raw token manually.</td></tr>
+      <tr><td>@ExceptionHandler</td><td>Placed on a method (often inside a @ControllerAdvice class) to catch a specific exception and turn it into a clean error response instead of a raw 500.</td></tr>
+    </table>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Use path variables for <i>identity</i> (which post) and query params for <i>modifiers</i> (how many, which page). And HTTP methods aren't just labels — GET should be safe to call repeatedly with no side effects, which is why "like a post" is a POST, not a GET, even though it feels like just reading a like button.</div></div>
   </section>
 
   <!-- ================= CHAPTER 6 ================= -->
@@ -761,46 +906,244 @@ public class ProductController {
       </div>
     </div>
 
-    <div class="plain-box">You define a repository interface extending <code>JpaRepository</code>, and Spring generates a working implementation at startup — no DAO boilerplate, no hand-written SQL for common cases. Method names like <code>findByUserIdOrderByCreatedAtDesc</code> are parsed and turned into queries automatically.</div>
+    <div class="plain-box"><b>What it is:</b> Spring Data JPA sits on top of JPA and Hibernate. You define an <b>entity</b> (a class mapped to a table) and a <b>repository interface</b> — Spring generates the working implementation for you at runtime. No DAO boilerplate, no hand-written SQL for common cases.</div>
+
+    <div class="plain-box"><b>Why it exists:</b> Plain JDBC means writing a <code>Connection</code>, a <code>PreparedStatement</code>, and mapping every column of every <code>ResultSet</code> row by hand — for every single query, on every entity. Most of that code is identical boilerplate repeated across a codebase.</div>
 
     <div class="app-scenario instagram">
-      <div class="app-scenario-tag"><span class="dot"></span>Instagram — loading a user's feed</div>
-      <p>The feed screen needs the newest posts from a given user, and separately, a count of how many posts they've made this week for a "trending creator" badge. One derived query method, one JPQL query — both without a single line of raw SQL.</p>
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — the data model behind posts, comments, and follows</div>
+      <p>Four entities carry the whole guide: <code>User</code>, <code>Post</code>, <code>Comment</code>, and <code>Follow</code>. One user has many posts, one post has many comments, and users follow each other — a relationship that carries its own status (pending or accepted), not just a plain link.</p>
     </div>
 
-    <pre class="language-java"><code class="language-java">public interface PostRepository extends JpaRepository&lt;Post, Long&gt; {
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">1. Entities — mapping a class to a table</p>
+    <pre class="language-java"><code class="language-java">@Entity
+@Table(name = "posts")
+public class Post {
 
-    // Derived query: Spring parses the method name and builds the SQL for you.
-    // "findBy" + "UserId" + "OrderByCreatedAtDesc" ->
-    //   SELECT * FROM post WHERE user_id = ? ORDER BY created_at DESC
-    List&lt;Post&gt; findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)   // auto-increment
+    private Long id;
 
-    // JPQL for anything a method name can't express cleanly
-    @Query("SELECT COUNT(p) FROM Post p WHERE p.userId = :userId AND p.createdAt >= :since")
-    long countRecentPosts(@Param("userId") Long userId, @Param("since") Instant since);
+    @Column(name = "caption", length = 500)
+    private String caption;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)                          // store enum as text, not a number
+    private PostStatus status;
+}</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@Entity</td><td>Marks the class as a JPA-managed table mapping.</td></tr>
+      <tr><td>@Table(name=...)</td><td>Overrides the default table name (otherwise it's the class name).</td></tr>
+      <tr><td>@Id</td><td>Marks the primary key field.</td></tr>
+      <tr><td>@GeneratedValue</td><td>How the ID is generated — IDENTITY (DB auto-increment), SEQUENCE, UUID.</td></tr>
+      <tr><td>@Column</td><td>Customizes column name, length, nullability — optional if defaults are fine.</td></tr>
+      <tr><td>@Enumerated(STRING)</td><td>Stores enums as readable text ("ACTIVE") instead of a number — always use STRING; ordinals break silently if the enum is reordered.</td></tr>
+    </table>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">2. Relationships — starting from the real tables, not the Java</p>
+    <p>Forget annotations for a moment. Here's what actually sits in the database — three plain tables.</p>
+
+    <table class="ann-table">
+      <tr><th>users</th><th></th></tr>
+      <tr><td>id</td><td>username</td></tr>
+      <tr><td>1</td><td>aisha.codes</td></tr>
+      <tr><td>2</td><td>rahul</td></tr>
+    </table>
+
+    <table class="ann-table">
+      <tr><th>posts</th><th></th><th></th></tr>
+      <tr><td>id</td><td>caption</td><td>user_id (who wrote it)</td></tr>
+      <tr><td>10</td><td>Sunset at the beach</td><td>1</td></tr>
+      <tr><td>20</td><td>My new puppy</td><td>2</td></tr>
+    </table>
+
+    <table class="ann-table">
+      <tr><th>comments</th><th></th><th></th><th></th></tr>
+      <tr><td>id</td><td>text</td><td>post_id (which post)</td><td>user_id (who commented)</td></tr>
+      <tr><td>101</td><td>Beautiful!</td><td>10</td><td>2</td></tr>
+      <tr><td>102</td><td>Love this</td><td>10</td><td>1</td></tr>
+      <tr><td>103</td><td>So cute!</td><td>20</td><td>1</td></tr>
+    </table>
+
+    <p><code>comments</code> has <b>two separate</b> foreign keys — <code>post_id</code> (which post this is on) and <code>user_id</code> (who wrote the comment). These mean completely different things even though both are "just a user_id somewhere." That distinction is exactly what the Java side has to get right.</p>
+
+    <pre class="language-java"><code class="language-java">// OWNING sides — each of these has a real @JoinColumn matching a real column above
+
+@Entity
+public class Post {
+    @Id @GeneratedValue Long id;
+    private String caption;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")        // real column in `posts`: WHO WROTE the post
+    private User author;
 }
 
-@Service
-public class FeedService {
+@Entity
+public class Comment {
+    @Id @GeneratedValue Long id;
+    private String text;
 
-    private final PostRepository postRepository;
+    @ManyToOne
+    @JoinColumn(name = "post_id")        // real column in `comments`: WHICH POST this is on
+    private Post post;
 
-    public FeedService(PostRepository postRepository) {
-        this.postRepository = postRepository;
+    @ManyToOne
+    @JoinColumn(name = "user_id")        // real column in `comments`: WHO WROTE the comment
+    private User commenter;
+}</code></pre>
+
+    <p>Each of those three fields directly reads a real column — nothing to explain, they just map straight to what's already in the table.</p>
+
+    <pre class="language-java"><code class="language-java">// MIRROR side — `users` table has NO columns for these; Hibernate has to
+// go ASK the other tables: "give me every row where user_id = me"
+
+@Entity
+public class User {
+    @Id @GeneratedValue Long id;
+    private String username;
+
+    @OneToMany(mappedBy = "author")       // "go to Post, find the field named `author`"
+    private List&lt;Post&gt; posts = new ArrayList&lt;&gt;();
+
+    @OneToMany(mappedBy = "commenter")    // "go to Comment, find the field named `commenter`"
+    private List&lt;Comment&gt; comments = new ArrayList&lt;&gt;();
+}</code></pre>
+
+    <table class="ann-table">
+      <tr><th>mappedBy value</th><th>What it literally means</th></tr>
+      <tr><td>mappedBy = "author"</td><td>"Go to the Post class, find the field named author (private User author;), and follow it backwards."</td></tr>
+      <tr><td>mappedBy = "commenter"</td><td>"Go to the Comment class, find the field named commenter (private User commenter;), and follow it backwards."</td></tr>
+    </table>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Both <code>posts.user_id</code> and <code>comments.user_id</code> point to the same <code>users</code> table, but they're two different relationships — that's why the fields are named <code>author</code> and <code>commenter</code> instead of both being called <code>user</code>. If you forget <code>mappedBy</code> entirely, Hibernate assumes nobody owns the link and invents brand-new tables you never asked for — e.g. a phantom <code>user_posts</code> table storing <code>user_id</code>/<code>posts_id</code> pairs — duplicating the fact that already lives correctly in <code>posts.user_id</code>.</div></div>
+
+    <div class="plain-box"><b>One-sentence summary:</b> <code>mappedBy</code> always means "I don't have a real column for this — go to that other entity class, find the field with this exact name, and that field's <code>@JoinColumn</code> is the real answer." <code>Post.author</code> and <code>Comment.commenter</code> own the real columns; <code>User.posts</code> and <code>User.comments</code> are just mirrors pointing at those exact field names.</div>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">2b. A relationship that carries its own data — Follow</p>
+    <p>Rahul following Aisha isn't just a link — it also has a <b>status</b> (pending or accepted). Whenever a relationship needs its own column like this, model it as its own entity instead of a plain <code>@ManyToMany</code>.</p>
+
+    <pre class="language-java"><code class="language-java">@Entity
+public class Follow {
+    @Id @GeneratedValue Long id;
+
+    @ManyToOne @JoinColumn(name = "follower_id")
+    private User follower;
+
+    @ManyToOne @JoinColumn(name = "followee_id")
+    private User followee;
+
+    @Enumerated(EnumType.STRING)
+    private FollowStatus status;         // PENDING, ACCEPTED
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>A plain <code>@ManyToMany</code> only fits when the join table has NO extra data of its own — the moment it needs a column like <code>status</code>, model it as its own entity with two <code>@ManyToOne</code> fields, exactly like <code>Follow</code> above.</div></div>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">3. FetchType — LAZY vs EAGER, and the N+1 problem</p>
+    <pre class="language-java"><code class="language-java">// BAD — triggers N+1: 1 query for the posts + 1 more PER post for its owner
+List&lt;Post&gt; posts = postRepository.findAll();
+posts.forEach(p -&gt; System.out.println(p.getOwner().getUsername()));   // 50 posts = 51 queries
+
+// FIX 1 — JOIN FETCH in a custom query
+@Query("SELECT p FROM Post p JOIN FETCH p.owner WHERE p.status = 'PUBLISHED'")
+List&lt;Post&gt; findPublishedWithOwner();
+
+// FIX 2 — @EntityGraph, more declarative
+@EntityGraph(attributePaths = {"owner", "comments"})
+List&lt;Post&gt; findByStatus(PostStatus status);</code></pre>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b><code>FetchType.EAGER</code> (the default for @ManyToOne/@OneToOne) loads the relationship immediately every time, whether you need it or not. <code>LAZY</code> (the default for @OneToMany/@ManyToMany) loads only when accessed — almost always what you want. Set @ManyToOne to LAZY explicitly; don't trust the default.</div></div>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">4. Repositories — the interface Spring implements for you</p>
+    <pre class="language-java"><code class="language-java">public interface PostRepository extends JpaRepository&lt;Post, Long&gt; {
+
+    // Derived query — Spring parses the method NAME and generates the SQL
+    List&lt;Post&gt; findByOwnerUsernameOrderByCreatedAtDesc(String username);
+
+    List&lt;Post&gt; findByStatusAndCreatedAtAfter(PostStatus status, LocalDateTime after);
+
+    boolean existsByOwnerUsernameAndCaptionContaining(String username, String keyword);
+
+    long countByStatus(PostStatus status);
+}</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Base interface</th><th>Gives you</th></tr>
+      <tr><td>CrudRepository&lt;T, ID&gt;</td><td>Basic save, findById, findAll, delete.</td></tr>
+      <tr><td>PagingAndSortingRepository</td><td>Adds findAll(Pageable), findAll(Sort).</td></tr>
+      <tr><td>JpaRepository&lt;T, ID&gt;</td><td>Extends both, adds JPA-specific extras like flush() and batch saveAll(). Almost always the one you extend.</td></tr>
+    </table>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">5. @Query (JPQL) and native queries</p>
+    <pre class="language-java"><code class="language-java">public interface FollowRepository extends JpaRepository&lt;Follow, Long&gt; {
+
+    // JPQL — operates on ENTITY names/fields, not table/column names
+    @Query("SELECT f.follower.username FROM Follow f " +
+           "WHERE f.followee.username = :username AND f.status = 'ACCEPTED'")
+    List&lt;String&gt; findAcceptedFollowerUsernames(@Param("username") String username);
+}
+
+public interface PostRepository extends JpaRepository&lt;Post, Long&gt; {
+
+    // nativeQuery = true -> RAW SQL, real table/column names, DB-specific features allowed
+    @Query(value = """
+        SELECT * FROM posts p
+        WHERE p.owner_id = :ownerId
+        ORDER BY p.like_count DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List&lt;Post&gt; findTopPostsByOwner(@Param("ownerId") Long ownerId, @Param("limit") int limit);
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Derived query methods for simple lookups, JPQL (@Query) for anything richer that method names can't express cleanly, and nativeQuery = true only when you need DB-specific functions (full-text search, window functions) — native queries bypass JPQL's entity-awareness, so they're less portable across databases.</div></div>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">6. @Modifying — for UPDATE/DELETE queries</p>
+    <pre class="language-java"><code class="language-java">public interface PostRepository extends JpaRepository&lt;Post, Long&gt; {
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.status = 'ARCHIVED' WHERE p.createdAt &lt; :cutoff")
+    int archiveOldPosts(@Param("cutoff") LocalDateTime cutoff);
+}</code></pre>
+    <p>Plain <code>@Query</code> is for <code>SELECT</code>. Anything that changes data needs <code>@Modifying</code> too, or Spring throws an exception — and it needs <code>@Transactional</code> since it's a write.</p>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">7. Pagination, sorting, and projections</p>
+    <pre class="language-java"><code class="language-java">public interface PostRepository extends JpaRepository&lt;Post, Long&gt; {
+    Page&lt;Post&gt; findByOwnerUsername(String username, Pageable pageable);
+
+    // Projection — a lightweight interface; Spring selects ONLY these columns,
+    // skipping comments and every other field on Post
+    interface PostSummary {
+        Long getId();
+        String getCaption();
     }
+    List&lt;PostSummary&gt; findSummaryByOwnerUsername(String username);
+}
 
-    public List&lt;Post&gt; loadFeed(Long userId, int page) {
-        return postRepository.findByUserIdOrderByCreatedAtDesc(
-                userId, PageRequest.of(page, 10));
-    }
+// usage — Aisha's feed, page 2, 10 per page, newest first
+Pageable pageable = PageRequest.of(2, 10, Sort.by("createdAt").descending());
+Page&lt;Post&gt; feed = postRepository.findByOwnerUsername("aisha.codes", pageable);
 
-    public boolean isTrendingThisWeek(Long userId) {
-        Instant weekAgo = Instant.now().minus(7, ChronoUnit.DAYS);
-        return postRepository.countRecentPosts(userId, weekAgo) &gt;= 5;
+feed.getContent();        // the actual List&lt;Post&gt; for this page
+feed.getTotalElements();  // total matching rows across ALL pages
+feed.hasNext();           // true/false</code></pre>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">8. @Transactional — grouping operations into one atomic unit</p>
+    <pre class="language-java"><code class="language-java">@Service
+public class PostService {
+
+    @Transactional   // like + notification either BOTH succeed or BOTH roll back
+    public void likeAndNotify(Long postId, String likerUsername) {
+        likeRepository.save(new Like(postId, likerUsername));
+        notificationService.notifyOwner(postId, likerUsername);  // throws? the like rolls back too
     }
 }</code></pre>
 
-    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Loading a feed of posts and then accessing <code>post.getComments()</code> in a loop, one post at a time, triggers a separate SQL query per post — the classic N+1 problem. Fix it with a JPQL <code>JOIN FETCH</code> or an <code>@EntityGraph</code> so comments load in the same query as the posts.</div></div>
+    <div class="callout tip"><span class="icon">💡</span><div><b>Always remember:</b> get the owning side of @OneToMany/@ManyToOne + mappedBy right, or Hibernate creates a phantom join table. Default @ManyToOne to LAZY explicitly. Watch for N+1 whenever a loop touches a lazy relationship — fix with JOIN FETCH or @EntityGraph. Use @Modifying + @Transactional together for any UPDATE/DELETE query.</div></div>
   </section>
   <!-- ================= CHAPTER 7 ================= -->
   <section class="chapter" id="c7">
@@ -813,44 +1156,78 @@ public class FeedService {
       </div>
     </div>
 
-    <div class="plain-box">By default every Spring bean is a <b>singleton</b> — one shared instance for the whole app. <b>Prototype</b> scope creates a new instance every time it's requested. <code>@PostConstruct</code> runs right after a bean's dependencies are injected; <code>@PreDestroy</code> runs right before the app shuts down — useful for opening and closing expensive resources exactly once.</div>
+    <div class="plain-box"><b>Scope</b> = how many instances exist and for how long. <b>Lifecycle</b> = the hooks Spring calls right after a bean is built, and right before it's destroyed.</div>
 
-    <div class="app-scenario whatsapp">
-      <div class="app-scenario-tag"><span class="dot"></span>WhatsApp — the connection manager</div>
-      <p>WhatsApp's backend keeps one pool of persistent connections to its message broker for the entire application — creating a new pool per request would exhaust resources instantly. That's a singleton by nature, and it needs to open the pool on startup and close it cleanly on shutdown so no messages are dropped mid-flight.</p>
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">1. Bean scopes — how many instances, and for how long</p>
+
+    <table class="ann-table">
+      <tr><th>Scope</th><th>How many instances</th><th>Real-world use</th></tr>
+      <tr><td>singleton (default)</td><td>One, shared by the whole app</td><td>A PaymentGatewayClient — stateless, safe to share everywhere</td></tr>
+      <tr><td>prototype</td><td>New instance every time it's injected/requested</td><td>A ReportGenerator that builds up mutable state while generating one report</td></tr>
+      <tr><td>request</td><td>One instance per HTTP request</td><td>A RequestContext holding the current logged-in user for that one request</td></tr>
+      <tr><td>session</td><td>One instance per user session</td><td>An Instagram DraftPostSession holding a photo being edited before posting</td></tr>
+    </table>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — three beans, three scopes</div>
+      <p>Ranking the feed is stateless and safe to share across everyone. Processing one photo upload builds up mutable, in-progress state that must never leak between uploads. And a half-written caption belongs to exactly one user's session — Aisha's draft should never appear in Rahul's.</p>
     </div>
 
-    <pre class="language-java"><code class="language-java">@Component   // singleton by default — Spring creates exactly ONE instance
-public class MessageBrokerConnectionManager {
-
-    private BrokerConnectionPool pool;
-
-    @PostConstruct   // runs once, right after this bean's fields/dependencies are set
-    public void openConnections() {
-        pool = BrokerConnectionPool.open(50);   // 50 persistent connections
-        System.out.println("Broker pool opened with 50 connections");
-    }
-
-    public void send(Message message) {
-        pool.borrowConnection().send(message);
-    }
-
-    @PreDestroy   // runs once, right before the application context shuts down
-    public void closeConnections() {
-        pool.drainAndClose();   // finish in-flight sends before closing
-        System.out.println("Broker pool drained and closed");
-    }
+    <pre class="language-java"><code class="language-java">@Service   // no @Scope = singleton by default — ONE shared instance for the whole app
+public class FeedRankingService {
+    // stateless — safe to share, no per-user data stored here
+    public List&lt;Post&gt; rankFeed(List&lt;Post&gt; posts) { ... }
 }
 
-// Contrast: a PDF invoice generator used per-request needs fresh, isolated state
-// (a mutable document builder) each time it's injected — prototype scope fits here.
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class InvoicePdfBuilder {
-    private final StringBuilder content = new StringBuilder();  // must not be shared
+@Scope("prototype")   // a NEW one every time — because it holds mutable, in-progress state
+public class ImageProcessingJob {
+    private List&lt;String&gt; steps = new ArrayList&lt;&gt;();   // builds up state while resizing/filtering one photo
+    public void addStep(String step) { steps.add(step); }
+}
+
+@Component
+@Scope(value = WebApplicationContext.SCOPE_SESSION, proxyMode = ScopedProxyMode.TARGET_CLASS)
+public class DraftPostSession {
+    // one per logged-in user's session — Aisha's half-written caption
+    // shouldn't leak into Rahul's session
+    private String draftCaption;
 }</code></pre>
 
-    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Injecting a prototype bean into a singleton only creates it <i>once</i> — at the singleton's construction time — because the singleton holds onto that single instance forever after. To get a fresh prototype on every call, inject an <code>ObjectProvider&lt;InvoicePdfBuilder&gt;</code> and call <code>.getObject()</code> each time.</div></div>
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>If <code>FeedRankingService</code> accidentally held per-user state as instance fields, every user would silently share (and corrupt) each other's data, since only one instance exists for everyone. Scope mismatches are a classic source of "works alone, breaks under concurrent users" bugs.</div></div>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">2. Bean lifecycle — from creation to shutdown</p>
+    <pre class="language-java"><code class="language-java">1. Constructor runs           -&gt; dependencies injected (Ch 2)
+2. Aware interfaces called    -&gt; e.g. ApplicationContextAware gives access to the context itself
+3. @PostConstruct method runs -&gt; "I'm fully wired — do my setup now"
+4. ... bean is used normally for the app's lifetime ...
+5. @PreDestroy method runs    -&gt; "app is shutting down — clean up now"</code></pre>
+
+    <div class="app-scenario instagram">
+      <div class="app-scenario-tag"><span class="dot"></span>Instagram — a Kafka consumer for likes and comments</div>
+      <p>The notification service must connect to Kafka once, right when the app starts — and disconnect cleanly when it shuts down, instead of leaving a socket open or a connection in a broken state.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">@Service
+public class NotificationConsumer {
+
+    private KafkaConsumer&lt;String, String&gt; consumer;
+
+    @PostConstruct
+    public void connect() {
+        consumer = new KafkaConsumer&lt;&gt;(kafkaProps());
+        consumer.subscribe(List.of("notifications"));
+        System.out.println("Connected to Kafka — ready to receive likes/comments");
+    }
+
+    @PreDestroy
+    public void disconnect() {
+        consumer.close();   // release the connection cleanly, don't just let the JVM kill it
+        System.out.println("Kafka connection closed gracefully");
+    }
+}</code></pre>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Without @PreDestroy, a server restart could kill the Kafka connection mid-read, leaving it broken or leaking a socket. @PostConstruct/@PreDestroy give a guaranteed, clean "setup" and "teardown" moment tied to the bean's actual life in the container — not scattered init() calls you have to remember to invoke yourself.</div></div>
   </section>
 
   <!-- ================= CHAPTER 8 ================= -->
@@ -927,40 +1304,45 @@ public class OtpService {
 
     <div class="plain-box">Bean Validation annotations (<code>@NotBlank</code>, <code>@Email</code>, <code>@Size</code>) go directly on a request object's fields. Adding <code>@Valid</code> in the controller tells Spring to check every rule before the method body runs — invalid input never reaches your service layer at all.</div>
 
-    <div class="app-scenario instagram">
-      <div class="app-scenario-tag"><span class="dot"></span>Instagram — sign-up form</div>
-      <p>A new account needs a real-looking email, a username of reasonable length, and a password meeting a minimum strength — checked in one place, consistently, instead of scattered <code>if</code> statements across the codebase.</p>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>YouTube — video upload</div>
+      <p>A new upload needs a title, a valid category, a duration within limits, and at least one tag — every rule checked in one place, consistently, instead of scattered <code>if</code> statements across the codebase.</p>
     </div>
 
-    <pre class="language-java"><code class="language-java">public record SignupRequest(
-
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 30, message = "Username must be 3-30 characters")
-    String username,
-
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be a valid address")
-    String email,
-
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    String password
+    <pre class="language-java"><code class="language-java">public record VideoUploadRequest(
+    @NotBlank @Size(max = 100) String title,
+    @NotNull VideoCategory category,
+    @Min(0) @Max(43200) int durationSeconds,
+    @NotEmpty @Size(max = 15) List&lt;@NotBlank String&gt; tags,
+    @Email String uploaderContactEmail
 ) {}
 
 @RestController
-@RequestMapping("/api/auth")
-public class AuthController {
+@RequestMapping("/api/videos")
+public class VideoController {
 
-    @PostMapping("/signup")
-    public ResponseEntity&lt;Void&gt; signup(@Valid @RequestBody SignupRequest request) {
-        // If validation fails, this method body never runs —
-        // Spring throws MethodArgumentNotValidException first.
-        accountService.createAccount(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    @PostMapping
+    public VideoResponse upload(@Valid @RequestBody VideoUploadRequest request) {
+        return videoService.upload(request);   // reached only if ALL rules above passed
     }
 }</code></pre>
 
-    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Pair this with a <code>@ControllerAdvice</code> (next chapter) that catches <code>MethodArgumentNotValidException</code> and turns it into a clean JSON error listing every failed field — instead of Spring's default, noisy stack-trace response.</div></div>
+    <p>If <code>title</code> is blank, Spring auto-rejects with <code>400</code> before <code>upload()</code> runs at all — no manual checks needed.</p>
+
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@NotNull</td><td>Value must be present.</td></tr>
+      <tr><td>@NotBlank</td><td>String must not be null/empty/whitespace — use for any typed text.</td></tr>
+      <tr><td>@NotEmpty</td><td>Collection/String must have at least one element.</td></tr>
+      <tr><td>@Size(max=)</td><td>Length bounds for a String, Collection, or array.</td></tr>
+      <tr><td>@Min / @Max</td><td>Numeric bounds.</td></tr>
+      <tr><td>@Email</td><td>Must match a valid email format.</td></tr>
+      <tr><td>@Pattern(regexp=)</td><td>Must match a custom regex.</td></tr>
+      <tr><td>@Future / @Past</td><td>Date must be after/before now.</td></tr>
+      <tr><td>@Valid</td><td>Triggers validation on a nested object or an incoming @RequestBody.</td></tr>
+    </table>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Use <code>@NotBlank</code>, not <code>@NotNull</code>, for text fields — <code>@NotNull</code> still lets <code>"   "</code> slip through. Pair this with a <code>@ControllerAdvice</code> (next chapter) that catches <code>MethodArgumentNotValidException</code> and turns it into a clean JSON error listing every failed field.</div></div>
   </section>
 
   <!-- ================= CHAPTER 10 ================= -->
@@ -974,46 +1356,98 @@ public class AuthController {
       </div>
     </div>
 
-    <div class="plain-box">Without central handling, every controller ends up with its own scattered try/catch blocks, and clients get inconsistent error shapes. <code>@RestControllerAdvice</code> plus <code>@ExceptionHandler</code> intercepts exceptions thrown anywhere in any controller and maps them to one consistent JSON error format and HTTP status.</div>
+    <div class="plain-box">An exception is Java's way of saying "I can't continue normally — something unexpected happened." Without a central place to handle them, every controller ends up with scattered try/catch blocks and clients get inconsistent, sometimes leaky, error responses.</div>
 
-    <div class="app-scenario amazon">
-      <div class="app-scenario-tag"><span class="dot"></span>Amazon — checkout failure</div>
-      <p>A shopper tries to buy the last unit of a product that just sold out to someone else a second earlier. <code>InventoryService</code> throws <code>OutOfStockException</code> — and every endpoint in the app that can run out of stock returns the exact same clean 409 response, without repeating the same catch block everywhere.</p>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>Zomato — placing an order</div>
+      <p>A customer tries to order from a restaurant that just closed for the night, seconds before the cutoff. Somewhere deep in <code>OrderService</code>, that has to turn into a clean, predictable error the app can display — not a crash.</p>
     </div>
 
-    <pre class="language-java"><code class="language-java">public class OutOfStockException extends RuntimeException {
-    public OutOfStockException(String sku) {
-        super("Product " + sku + " is out of stock");
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">Step 1 — What is an exception, really?</p>
+    <p>When code hits a problem it can't resolve, instead of returning a weird fallback value, it <b>throws</b> an object describing what went wrong. That object travels upward through the call stack until something catches it — like escalating a support ticket to a manager who might know what to do.</p>
+    <pre class="language-java"><code class="language-java">public void placeOrder(Order order) {
+    if (!restaurant.isOpen()) {
+        throw new RestaurantClosedException("Closed for the night");   // stop here, throw upward
+    }
+    // normal order logic never runs if we threw above
+}</code></pre>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">Step 2 — What happens if nobody catches it?</p>
+    <p>It travels all the way up and out of the app, and Spring returns a raw <code>500 Internal Server Error</code> with a full stack trace — visible to whoever called the API. Unprofessional, and it can leak internal class names and file paths.</p>
+    <pre class="language-java"><code class="language-java">{ "status": 500, "error": "Internal Server Error",
+  "trace": "com.zomato.RestaurantClosedException: Closed for the night\n\tat OrderService.place(...)..." }</code></pre>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">Step 3 — The naive fix: catch it locally, in the controller</p>
+    <pre class="language-java"><code class="language-java">@PostMapping("/orders")
+public ResponseEntity&lt;?&gt; placeOrder(@RequestBody OrderRequest req) {
+    try {
+        return ResponseEntity.ok(orderService.place(req));
+    } catch (RestaurantClosedException e) {
+        return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
+    }
+}</code></pre>
+    <p>Works for this one endpoint — but Zomato has dozens (place order, cancel, add to cart, apply coupon), and most can hit the same exceptions. Copy-pasting this everywhere is the real problem to solve.</p>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">Step 4 — The mental shift: stop catching locally, catch globally</p>
+    <p>Instead of every controller defending itself, one place outside all controllers watches for exceptions from the entire app. Controllers go back to just doing their job:</p>
+    <pre class="language-java"><code class="language-java">// Controller now — NO try/catch at all
+@PostMapping("/orders")
+public OrderResponse placeOrder(@RequestBody OrderRequest req) {
+    return orderService.place(req);   // if this throws, someone else deals with it now
+}</code></pre>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">Step 5 — How Spring wires this up internally</p>
+    <pre class="language-java"><code class="language-java">placeOrder() throws RestaurantClosedException
+        -&gt; Spring's dispatcher notices the exception was never caught
+        -&gt; it looks for a @RestControllerAdvice class with a matching @ExceptionHandler
+        -&gt; found one for RestaurantClosedException.class -&gt; runs THAT method instead
+        -&gt; that method returns the HTTP status + JSON body to send back</code></pre>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">Step 6 — Putting it together for Zomato</p>
+    <pre class="language-java"><code class="language-java">public class RestaurantClosedException extends RuntimeException {
+    public RestaurantClosedException(String msg) { super(msg); }
+}
+
+public class ItemOutOfStockException extends RuntimeException {
+    public ItemOutOfStockException(String msg) { super(msg); }
+}
+
+@RestControllerAdvice   // watches EVERY controller, app-wide
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(RestaurantClosedException.class)   // "if you see THIS exception..."
+    public ResponseEntity&lt;ApiError&gt; handleClosed(RestaurantClosedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)          // ...do THIS (409)
+                .body(new ApiError("RESTAURANT_CLOSED", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ItemOutOfStockException.class)
+    public ResponseEntity&lt;ApiError&gt; handleOutOfStock(ItemOutOfStockException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("ITEM_OUT_OF_STOCK", ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)   // final safety net — anything not handled above
+    public ResponseEntity&lt;ApiError&gt; handleUnknown(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiError("INTERNAL_ERROR", "Something went wrong"));
     }
 }
 
-public record ApiError(String message, int status) {}
+public record ApiError(String code, String message) {}</code></pre>
+    <p>Now every controller in the app — orders, cart, coupons — automatically gets clean, consistent errors, without a single try/catch near business logic:</p>
+    <pre class="language-java"><code class="language-java">{ "code": "RESTAURANT_CLOSED", "message": "This restaurant stopped taking orders 10 minutes ago" }</code></pre>
 
-@RestControllerAdvice   // applies to every @RestController in the app
-public class GlobalExceptionHandler {
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">Step 7 — The two annotations that matter most</p>
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@RestControllerAdvice</td><td>Put on ONE class — marks it as the global handler for the whole app.</td></tr>
+      <tr><td>@ExceptionHandler(X.class)</td><td>Put on a method inside that class — "this method handles exception type X."</td></tr>
+    </table>
 
-    @ExceptionHandler(OutOfStockException.class)
-    public ResponseEntity&lt;ApiError&gt; handleOutOfStock(OutOfStockException ex) {
-        ApiError error = new ApiError(ex.getMessage(), 409);
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall — the one rule to remember</b>Spring matches the most specific exception type first, so <code>Exception.class</code> must always be your last, catch-all handler — never let it accidentally swallow an exception you actually wrote a specific handler for.</div></div>
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity&lt;ApiError&gt; handleValidation(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.joining(", "));
-        return ResponseEntity.badRequest().body(new ApiError(message, 400));
-    }
-
-    @ExceptionHandler(Exception.class)   // catch-all safety net
-    public ResponseEntity&lt;ApiError&gt; handleUnexpected(Exception ex) {
-        return ResponseEntity.internalServerError()
-                .body(new ApiError("Something went wrong", 500));
-    }
-}</code></pre>
-
-    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Order matters: put specific exception handlers (<code>OutOfStockException</code>) before the generic <code>Exception.class</code> catch-all. Spring picks the most specific match, but a sloppy catch-all higher up can accidentally swallow errors you meant to handle precisely.</div></div>
+    <div class="plain-box"><b>The one-sentence mental model:</b> an exception is a note thrown upward saying "I couldn't finish — you deal with it." Without global handling, that note reaches the client as a scary stack trace. With <code>@RestControllerAdvice</code>, it's intercepted once, everywhere, and turned into a clean, predictable JSON response.</div>
   </section>
 
   <!-- ================= CHAPTER 11 ================= -->
@@ -1023,40 +1457,48 @@ public class GlobalExceptionHandler {
       <div class="chap-num">11</div>
       <div>
         <div class="chap-title">AOP — Aspect-Oriented Programming</div>
-        <p class="chap-sub">Cross-cutting concerns like logging and auditing, without touching business code.</p>
+        <p class="chap-sub">Cross-cutting concerns like logging and timing, without touching business code.</p>
       </div>
     </div>
 
-    <div class="plain-box">Some concerns — logging, auditing, timing, retries — apply across many unrelated methods. Instead of copy-pasting logging code into every method, AOP lets you write it once as an "aspect" and declare, with a <code>@Pointcut</code> expression, which methods it should wrap around.</div>
+    <div class="plain-box">Some behavior — logging, timing, security checks — isn't really business logic. It's the same generic code that needs to run around many unrelated methods. Without AOP, you'd copy-paste it into every method; miss one, and that method silently has no logging, no check, no timing. AOP lets you write it once, as a rule, and Spring applies it everywhere automatically — zero changes to the actual business logic.</div>
 
-    <div class="app-scenario amazon">
-      <div class="app-scenario-tag"><span class="dot"></span>Amazon — audit trail on checkout</div>
-      <p>Every method in the checkout package needs to be logged for compliance: who called it, with what arguments, how long it took. Writing that logging code inside <code>placeOrder</code>, <code>applyDiscount</code>, and every other checkout method would be repetitive and easy to forget on new methods.</p>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>Zomato — timing every service method automatically</div>
+      <p><code>placeOrder</code>, <code>addToCart</code>, <code>applyCoupon</code> — dozens of methods, all needing the same execution-time logging for performance monitoring. One rule covers all of them, including new methods added later.</p>
     </div>
 
     <pre class="language-java"><code class="language-java">@Aspect
 @Component
-public class CheckoutAuditAspect {
+public class ExecutionTimeAspect {
 
-    private static final Logger log = LoggerFactory.getLogger(CheckoutAuditAspect.class);
-
-    // Matches every public method in every class under the checkout package —
-    // new methods added later are covered automatically, no extra wiring needed.
-    @Around("execution(public * com.amazon.checkout..*.*(..))")
-    public Object auditCall(ProceedingJoinPoint joinPoint) throws Throwable {
-        String method = joinPoint.getSignature().toShortString();
+    // matches ANY method in ANY class under the service package — one rule, applies everywhere
+    @Around("execution(* com.zomato.service.*.*(..))")
+    public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
 
-        log.info("AUDIT: entering {} with args={}", method, joinPoint.getArgs());
-        Object result = joinPoint.proceed();   // actually runs placeOrder(), etc.
-        long durationMs = System.currentTimeMillis() - start;
+        Object result = joinPoint.proceed();   // actually runs the real method now
 
-        log.info("AUDIT: {} completed in {}ms", method, durationMs);
+        long duration = System.currentTimeMillis() - start;
+        log.info("{} took {}ms", joinPoint.getSignature().getName(), duration);
         return result;
     }
 }</code></pre>
 
-    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@Around</code> is the most powerful advice type because it wraps the method entirely — you decide whether <code>joinPoint.proceed()</code> even runs. For simpler cases, <code>@Before</code> and <code>@AfterReturning</code> are easier to reason about and harder to misuse.</div></div>
+    <p><code>OrderService.placeOrder()</code>, <code>CartService.addToCart()</code>, <code>CouponService.apply()</code> — all get timed automatically, with zero changes to any of them.</p>
+
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@Aspect</td><td>Marks the class as containing cross-cutting logic.</td></tr>
+      <tr><td>@Before</td><td>Runs before the matched method — e.g. a permission check.</td></tr>
+      <tr><td>@After</td><td>Runs after the method finishes (success or failure) — e.g. cleanup.</td></tr>
+      <tr><td>@Around</td><td>Runs before AND after — most powerful; can skip calling the real method entirely.</td></tr>
+      <tr><td>@Pointcut</td><td>Names a reusable "which methods does this apply to" rule.</td></tr>
+    </table>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@Transactional</code> and <code>@Cacheable</code> are both implemented as AOP aspects internally — a @Cacheable method may never actually run if the aspect finds a cached value and returns early, skipping <code>proceed()</code> entirely.</div></div>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>AOP only intercepts calls that go through the proxy. If a method calls another method on <code>this</code> from inside the same class, that internal call bypasses the proxy entirely — the aspect won't fire.</div></div>
   </section>
 
   <!-- ================= CHAPTER 12 ================= -->
@@ -1070,43 +1512,150 @@ public class CheckoutAuditAspect {
       </div>
     </div>
 
-    <div class="plain-box"><code>@Transactional</code> wraps a method in a database transaction: if every statement inside succeeds, the changes commit together; if any exception is thrown, everything rolls back as if none of it happened. It's the difference between "partially broken data" and "nothing changed."</div>
+    <div class="plain-box"><b>The core idea:</b> a transaction groups several database steps into ONE unit — either all of them happen, or none of them do. <code>@Transactional</code> is how you draw that boundary around a method.</div>
 
     <div class="app-scenario amazon">
-      <div class="app-scenario-tag"><span class="dot"></span>Amazon — placing an order</div>
-      <p>Placing an order does three things: reserve stock, charge the card, create the order record. If the payment gateway fails after stock was already reserved, that reservation must be undone — otherwise the item is stuck "reserved" forever with no successful order behind it.</p>
+      <div class="app-scenario-tag"><span class="dot"></span>The simplest example — transferring money</div>
+      <p>Sending ₹500 to a friend is actually two steps: subtract ₹500 from your account, add ₹500 to theirs. If the server crashes right after step 1 but before step 2, your money vanishes — it left your account but never arrived. A transaction makes these two steps succeed or fail as one.</p>
     </div>
 
     <pre class="language-java"><code class="language-java">@Service
-public class OrderService {
+public class TransferService {
 
-    private final InventoryRepository inventoryRepository;
-    private final PaymentService paymentService;
-    private final OrderRepository orderRepository;
+    @Transactional   // this one word means "treat this whole method as ONE unit"
+    public void transferMoney(Long fromAccountId, Long toAccountId, double amount) {
 
-    public OrderService(InventoryRepository inventoryRepository,
-                         PaymentService paymentService,
-                         OrderRepository orderRepository) {
-        this.inventoryRepository = inventoryRepository;
-        this.paymentService = paymentService;
-        this.orderRepository = orderRepository;
-    }
+        Account from = accountRepo.findById(fromAccountId).get();
+        from.setBalance(from.getBalance() - amount);   // step 1: subtract
+        accountRepo.save(from);
 
-    @Transactional   // all three steps commit together, or none do
-    public Order placeOrder(String sku, int qty, BigDecimal amount) {
-        inventoryRepository.reserveStock(sku, qty);       // step 1: DB write
-
-        boolean charged = paymentService.charge(amount);   // step 2: external call
-        if (!charged) {
-            throw new PaymentFailedException("Card declined");
-            // exception thrown -> Spring rolls back step 1 automatically
-        }
-
-        return orderRepository.save(new Order(sku, qty, amount));  // step 3: DB write
+        Account to = accountRepo.findById(toAccountId).get();
+        to.setBalance(to.getBalance() + amount);       // step 2: add
+        accountRepo.save(to);
     }
 }</code></pre>
 
-    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Calling an <code>@Transactional</code> method from another method in the <i>same class</i> bypasses the transaction entirely — Spring implements it via a proxy that wraps external calls only, and self-invocation skips the proxy. Call it through an injected bean (a different class) to get the transaction to actually apply.</div></div>
+    <p>If the app crashes or throws an exception right after step 1 but before step 2 finishes, Spring automatically reverses step 1 too (a <b>rollback</b>) — your friend never got the money, so you get yours back. Without <code>@Transactional</code>, step 1 would already be permanently saved the moment it ran, with no automatic undo.</p>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">1. Where to put it</p>
+    <p>Put <code>@Transactional</code> on <b>service-layer methods</b> — the method representing one complete business operation ("transfer money," "place order"). Not on individual repository calls; those are just single steps, not the whole operation.</p>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">2. rollbackFor — which errors trigger the undo</p>
+    <pre class="language-java"><code class="language-java">@Transactional   // DEFAULT: only rolls back on RuntimeException
+public void transferMoney(...) {
+    if (insufficientFunds) {
+        throw new InsufficientFundsException("Not enough balance");
+        // if this extends the CHECKED Exception class, NO rollback happens!
+    }
+}
+
+@Transactional(rollbackFor = Exception.class)   // force rollback on ANY exception
+public void transferMoney(...) { ... }</code></pre>
+    <p>By default, Spring only rolls back for unchecked exceptions (<code>RuntimeException</code> and its subclasses). The simplest fix: always make custom exceptions extend <code>RuntimeException</code>, and you never need to remember <code>rollbackFor</code> at all.</p>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">3. readOnly — a hint for read-only methods</p>
+    <pre class="language-java"><code class="language-java">@Transactional(readOnly = true)   // this method only READS, never writes
+public Account getAccountDetails(Long accountId) {
+    return accountRepo.findById(accountId).get();
+}</code></pre>
+    <p>Tells the database "I promise not to change anything," letting it skip some safety bookkeeping — a small performance boost for read-heavy methods.</p>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">4. propagation — what happens when one @Transactional method calls another</p>
+    <pre class="language-java"><code class="language-java">@Transactional
+public void placeOrder(...) {
+    saveOrder(...);              // calls another @Transactional method below
+    writeAuditLog("order placed");
+}
+
+@Transactional(propagation = Propagation.REQUIRES_NEW)   // survives even if placeOrder later fails
+public void writeAuditLog(String message) {
+    auditRepo.save(new AuditEntry(message));
+}</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Propagation</th><th>Meaning in plain English</th></tr>
+      <tr><td>REQUIRED (default)</td><td>Join the existing transaction if there is one; otherwise start a new one. Almost always what you want.</td></tr>
+      <tr><td>REQUIRES_NEW</td><td>Always start a brand-new, independent transaction — even if one is already running. Used when one part must save no matter what, even if the outer transaction later fails.</td></tr>
+      <tr><td>NESTED</td><td>Start a sub-transaction that can roll back on its own, without necessarily undoing the outer one.</td></tr>
+    </table>
+
+    <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Calling an <code>@Transactional</code> method from another method in the <i>same class</i> bypasses the transaction entirely — Spring implements it via a proxy that wraps external calls only, and self-invocation skips the proxy. Call it through an injected bean (a different class) to get it to actually apply.</div></div>
+
+    <p style="margin:18px 0 4px;font-weight:600;color:var(--ink)">5. Isolation levels — what can I see of OTHER transactions running right now?</p>
+    <p>This is a different question from rollback: not "does my transaction succeed," but "while I'm running, what do I see of other transactions happening at the same time?"</p>
+
+    <pre class="language-java"><code class="language-java">@Transactional(isolation = Isolation.READ_COMMITTED)   // this is the DEFAULT in most databases
+public void someMethod() { ... }</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Level</th><th>Plain-English meaning</th><th>Risk it avoids</th></tr>
+      <tr><td>READ_UNCOMMITTED</td><td>I can see other transactions' changes even before they're committed.</td><td>None avoided — riskiest, rarely used.</td></tr>
+      <tr><td>READ_COMMITTED (default)</td><td>I only see other transactions' changes AFTER they've fully committed.</td><td>Avoids seeing "fake" data that might get rolled back later.</td></tr>
+      <tr><td>REPEATABLE_READ</td><td>Reading the same row twice in my transaction gives the SAME value both times.</td><td>Avoids seeing different values for the same row mid-transaction.</td></tr>
+      <tr><td>SERIALIZABLE</td><td>Acts as if my transaction ran completely alone.</td><td>Avoids every possible conflict — slowest, blocks the most.</td></tr>
+    </table>
+
+    <p>Simple example of the difference: Transaction A starts updating a balance but hasn't committed. Transaction B reads that balance. With <code>READ_UNCOMMITTED</code>, B sees A's half-finished number — risky, since A might still fail and roll back. With <code>READ_COMMITTED</code>, B waits and sees the balance from before A's change, until A actually commits.</p>
+
+    <table class="ann-table">
+      <tr><th>Annotation / attribute</th><th>Answers the question</th></tr>
+      <tr><td>@Transactional</td><td>Should this whole method succeed or fail as one unit?</td></tr>
+      <tr><td>rollbackFor</td><td>Which exceptions should trigger the undo?</td></tr>
+      <tr><td>readOnly</td><td>Is this method only reading, never writing?</td></tr>
+      <tr><td>propagation</td><td>What happens when a transactional method calls another transactional method?</td></tr>
+      <tr><td>isolation</td><td>What can I see of OTHER transactions running at the same time as mine?</td></tr>
+    </table>
+
+    <p style="margin:24px 0 4px;font-weight:600;color:var(--ink)">Addon — the same idea at Flipkart Big Billion Day scale</p>
+    <div class="app-scenario youtube">
+      <div class="app-scenario-tag"><span class="dot"></span>Flipkart — a flash sale, 50,000 buyers, one second</div>
+      <p>100 units of an iPhone go on sale. If stock were one row with a <code>stock_quantity</code> counter, all 50,000 requests would queue behind that single row — a hotspot. The fix: one row PER physical unit, so 100 buyers can lock 100 different rows at once instead of fighting over one.</p>
+    </div>
+
+    <pre class="language-java"><code class="language-java">// one row = one physical unit, instead of a single stock_quantity counter
+@Entity
+public class ProductItem {
+    @Id Long id;
+    Long productId;
+    String serialNo;
+
+    @Enumerated(EnumType.STRING)
+    ItemStatus status;   // AVAILABLE, RESERVED, SOLD
+}
+
+public interface ProductItemRepository extends JpaRepository&lt;ProductItem, Long&gt; {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)   // ==&gt; SELECT ... FOR UPDATE: an EXCLUSIVE lock
+    @Query("""
+        SELECT p FROM ProductItem p
+        WHERE p.productId = :productId AND p.status = 'AVAILABLE'
+        ORDER BY p.id
+        """)
+    Optional&lt;ProductItem&gt; findFirstAvailableForUpdate(@Param("productId") Long productId);
+}
+
+@Service
+public class OrderService {
+
+    @Transactional(rollbackFor = Exception.class)
+    public Order placeOrder(Long userId, Long productId) {
+
+        // grab ONE unit and lock it exclusively — no other buyer can touch this row
+        ProductItem unit = itemRepo.findFirstAvailableForUpdate(productId)
+                .orElseThrow(() -&gt; new OutOfStockException(productId));
+
+        unit.setStatus(ItemStatus.RESERVED);
+        itemRepo.save(unit);
+
+        payment.charge(userId, 49999);   // if this throws, the reservation above rolls back too
+
+        return orderRepo.save(new Order(userId, unit.getId(), OrderStatus.CONFIRMED));
+    }
+}</code></pre>
+
+    <p><code>SELECT ... FOR UPDATE</code> acquires an <b>exclusive lock</b> on the row it reads — buyer A locking row #7 means buyer B's identical query skips straight to row #8. A hundred buyers can each lock a different row in parallel; that parallelism is exactly why the one-row-per-unit model matters.</p>
+
+    <div class="callout tip"><span class="icon">💡</span><div><b>Tip — matching isolation to the job</b>Checkout itself stays on the default <code>READ_COMMITTED</code> — fast, and buyers never see uncommitted junk. A seller's stock report reading the count twice in one transaction wants <code>REPEATABLE_READ</code>, so both reads agree even if units sell in between. A one-off end-of-sale reconciliation job wants <code>SERIALIZABLE</code> — safest, but far too slow to put anywhere near live checkout traffic.</div></div>
   </section>
   <!-- ================= CHAPTER 13 ================= -->
   <section class="chapter" id="c13">
@@ -1151,6 +1700,19 @@ public class VideoMetadataService {
         videoRepository.updateTitle(videoId, newTitle);
     }
 }</code></pre>
+
+    <pre class="language-java"><code class="language-java">@SpringBootApplication
+@EnableCaching   // turns on @Cacheable/@CacheEvict/@CachePut processing for the app
+public class YoutubeApplication { }</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@EnableCaching</td><td>Turns on Spring's caching support for the whole app — required once, on a config/main class.</td></tr>
+      <tr><td>@Cacheable</td><td>Cache the return value; skip the method entirely on a cache hit.</td></tr>
+      <tr><td>@CacheEvict</td><td>Remove an entry — call when the underlying data changes.</td></tr>
+      <tr><td>@CachePut</td><td>Always runs the method AND updates the cache with the fresh result — for writes that should refresh the cache instead of just invalidating it.</td></tr>
+      <tr><td>@CacheConfig(cacheNames=...)</td><td>Set a shared cache name once at the class level instead of repeating it on every method.</td></tr>
+    </table>
 
     <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>The default <code>ConcurrentMapCacheManager</code> is in-memory and per-instance — fine for a demo, useless across multiple app servers. For a real multi-instance deployment, back <code>@Cacheable</code> with Redis so every instance shares the same cache.</div></div>
   </section>
@@ -1211,6 +1773,25 @@ public class NotificationService {
     }
 }</code></pre>
 
+    <pre class="language-java"><code class="language-java">// making failures visible, per the pitfall below
+@Async
+public CompletableFuture&lt;Void&gt; notifyFollowersSafely(Post post) {
+    try {
+        notifyFollowers(post);
+        return CompletableFuture.completedFuture(null);
+    } catch (Exception e) {
+        return CompletableFuture.failedFuture(e);   // caller CAN observe this, unlike a void method
+    }
+}</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Annotation / type</th><th>Use case</th></tr>
+      <tr><td>@EnableAsync</td><td>Turns on @Async processing for the app — required once.</td></tr>
+      <tr><td>@Async (void)</td><td>Fire-and-forget — the caller never learns if it failed.</td></tr>
+      <tr><td>@Async (CompletableFuture&lt;T&gt;)</td><td>Caller CAN check success/failure or chain more work with .thenApply / .exceptionally.</td></tr>
+      <tr><td>@Async("executorName")</td><td>Runs on a specific, named thread pool instead of the default one — isolates slow tasks from everything else.</td></tr>
+    </table>
+
     <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Exceptions thrown inside a <code>void @Async</code> method are silently swallowed by default — nothing surfaces to the caller. Use <code>AsyncUncaughtExceptionHandler</code>, or return a <code>CompletableFuture</code> so failures are at least visible somewhere.</div></div>
   </section>
 
@@ -1259,6 +1840,18 @@ public class AbandonedCartJob {
         }
     }
 }</code></pre>
+
+    <pre class="language-java"><code class="language-java">@Scheduled(fixedRate = 60000)                          // every 60s, timed from the START of the previous run
+@Scheduled(fixedDelay = 60000)                          // every 60s, timed from the END of the previous run
+@Scheduled(initialDelay = 10000, fixedRate = 60000)     // wait 10s after startup, then every 60s</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Attribute</th><th>Use case</th></tr>
+      <tr><td>cron = "..."</td><td>An exact calendar time — "every night at 2 AM," "every Monday at 9 AM."</td></tr>
+      <tr><td>fixedRate</td><td>Run every N ms, timed from when the PREVIOUS run started — can overlap if a run is slow.</td></tr>
+      <tr><td>fixedDelay</td><td>Run every N ms, timed from when the PREVIOUS run finished — never overlaps.</td></tr>
+      <tr><td>initialDelay</td><td>Wait this long after app startup before the very first run.</td></tr>
+    </table>
 
     <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@Scheduled</code> jobs run on a single thread by default, and only on <i>one</i> instance if you run several — with multiple app servers, an unprotected schedule fires the job once per instance. Use ShedLock or a database lock so only one instance actually executes it.</div></div>
   </section>
@@ -1321,6 +1914,25 @@ public class DeliveryAnalyticsListener {
     }
 }</code></pre>
 
+    <pre class="language-java"><code class="language-java">// wait until the DB transaction actually commits before reacting --
+// otherwise a listener might act on a delivery that later rolls back
+@Component
+public class DeliveryAnalyticsListenerSafe {
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onDelivered(MessageDeliveredEvent event) {
+        // safe: the DB write markDelivered() made is guaranteed committed by now
+    }
+}</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>ApplicationEventPublisher</td><td>Inject this to publish an event — the publisher doesn't know or care who's listening.</td></tr>
+      <tr><td>@EventListener</td><td>Marks a method as reacting to one event type — runs synchronously, on the publisher's thread, by default.</td></tr>
+      <tr><td>@Async + @EventListener</td><td>Makes that one listener non-blocking, independent of the other listeners.</td></tr>
+      <tr><td>@TransactionalEventListener</td><td>Only reacts AFTER the surrounding transaction commits — avoids acting on data that might still roll back.</td></tr>
+    </table>
+
     <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>By default listeners run synchronously on the publisher's thread — one slow listener blocks the whole chain. Add <code>@Async</code> to a listener method (with <code>@EnableAsync</code> already on) to make that specific reaction non-blocking.</div></div>
   </section>
   <!-- ================= CHAPTER 17 ================= -->
@@ -1379,6 +1991,18 @@ public class ProfilePostsController {
     }
 }</code></pre>
 
+    <pre class="language-java"><code class="language-java">@Configuration
+@EnableMethodSecurity   // required once — turns on @PreAuthorize/@PostAuthorize app-wide
+public class MethodSecurityConfig { }</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@EnableMethodSecurity</td><td>Turns on method-level security annotations for the app — required once.</td></tr>
+      <tr><td>@PreAuthorize("expr")</td><td>Checked BEFORE the method runs — the standard choice; can reference path variables (#userId) and beans (@profileAccessService...).</td></tr>
+      <tr><td>@PostAuthorize("expr")</td><td>Checked AFTER the method runs, using its return value (returnObject...) — for when the decision depends on the loaded data itself.</td></tr>
+      <tr><td>@Secured("ROLE_X")</td><td>Older, simpler role-only check — no SpEL expressions, just a role list.</td></tr>
+    </table>
+
     <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b><code>@PreAuthorize</code> runs <i>before</i> the method body — a denied check throws <code>AccessDeniedException</code> and the controller code never executes at all, which is exactly what you want for sensitive data like private posts.</div></div>
   </section>
 
@@ -1435,6 +2059,16 @@ public class StorageBackendHealthIndicator implements HealthIndicator {
 //     "storageBackend": { "status": "UP", "details": { "backend": "reachable" } },
 //     "db": { "status": "UP" } } }</code></pre>
 
+    <table class="ann-table">
+      <tr><th>Endpoint / property</th><th>Use case</th></tr>
+      <tr><td>/actuator/health</td><td>Aggregated UP/DOWN status — what Kubernetes probes hit (Ch 8 of the Docker/K8s guide).</td></tr>
+      <tr><td>/actuator/metrics</td><td>Live JVM and request metrics — memory, GC pauses, request counts and latencies.</td></tr>
+      <tr><td>/actuator/prometheus</td><td>The same metrics in Prometheus's scrape format, for Grafana dashboards.</td></tr>
+      <tr><td>/actuator/info</td><td>Static build/version info you configure — useful for confirming what's actually deployed.</td></tr>
+      <tr><td>management.endpoints.web.exposure.include</td><td>Whitelist of which endpoints are exposed over HTTP at all.</td></tr>
+      <tr><td>management.endpoint.health.show-details</td><td>Whether /health shows the full per-component breakdown or just the top-level status.</td></tr>
+    </table>
+
     <div class="callout pitfall"><span class="icon">⚠️</span><div><b>Pitfall</b>Never expose every Actuator endpoint (including <code>/env</code> or <code>/heapdump</code>) publicly with no authentication — they can leak secrets or crash the JVM. Restrict which ones are exposed and put them behind Spring Security in production.</div></div>
   </section>
 
@@ -1479,6 +2113,15 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.message").value("Product B08N5WRWNW is out of stock"));
     }
 }</code></pre>
+
+    <table class="ann-table">
+      <tr><th>Annotation</th><th>Use case</th></tr>
+      <tr><td>@SpringBootTest</td><td>Boots the FULL application context — true end-to-end, but slow. Use sparingly.</td></tr>
+      <tr><td>@WebMvcTest(X.class)</td><td>Loads only the web layer for controller X — everything below (services, repos) must be mocked.</td></tr>
+      <tr><td>@DataJpaTest</td><td>Loads only JPA/repository beans against an in-memory test database — for testing queries, not controllers.</td></tr>
+      <tr><td>@MockBean</td><td>Replaces a real Spring bean with a Mockito mock inside the test context.</td></tr>
+      <tr><td>@Test</td><td>Marks one test method (JUnit 5) — plain constructor-injected classes (Ch 2) don't even need Spring here.</td></tr>
+    </table>
 
     <div class="callout tip"><span class="icon">💡</span><div><b>Tip</b>Reach for <code>@SpringBootTest</code> sparingly — for the handful of true end-to-end flows worth verifying. Use <code>@WebMvcTest</code>, <code>@DataJpaTest</code>, and plain constructor-injected unit tests (from Chapter 2) for everything else; a test suite made only of full-context tests becomes painfully slow.</div></div>
   </section>
